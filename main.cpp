@@ -2,31 +2,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-void processInput(GLFWwindow *window);
-
-const char *vertexShaderSource = 
-"#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-" gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-
-const char *fragmentShaderSource =
-"#version 330 core\n"
-"out vec4 FragColor;\n"
-"uniform vec4 ourColor;"
-"void main()\n"
-"{\n"
-" FragColor = ourColor;\n"
-"}\0";
-
-typedef struct color {
-    float r;
-    float g;
-    float b;
-} color_t;
-
 const color_t dark = {0.258f, 0.114f, 0.024f};
 const color_t milk = {1.0f, 0.98f, 0.957f};
 const color_t mochi = {1.0f, 0.878f, 0.941f};
