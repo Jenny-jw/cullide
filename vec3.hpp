@@ -1,60 +1,49 @@
-#include <cmath>
-
-using std::sqrt;
-
 class vec3 {
-    public:
-        vec3() : e{0,0,0} {}
-        vec3(float e0, float e1, float e2) : e{e0, e1, e2} {}
-
-        float x() const { return e[0]; }
-        float y() const { return e[1]; }
-        float z() const { return e[2]; }
-
-        // ? slide
-        vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
-        float operator[](int i) const { return e[i]; }
-        float& operator[](int i) { return e[i]; }
-
-        vec3& operator+=(const vec3 &v) {
-            e[0] += v.e[0];
-            e[1] += v.e[1];
-            e[2] += v.e[2];
-            return *this;
-        }
-
-        /* slide */
-        vec3& operator*=(const float t) {
-            e[0] *= t;
-            e[1] *= t;
-            e[2] *= t;
-            return *this;
-        }
-
-        vec3& operator/=(const float t) {
-            return *this *= 1/t;
-        }
-
-        float length() const {
-            return sqrt(length_squared());
-        }
-
-        float length_squared() const {
-            return e[0]*e[0] + e[1]*e[1] + e[2]*e[2];
-        }
-
-        friend std::ostream& operator<<(std::ostream &, const vec3 &);
+    private:
+        float x;
+        float y;
+        float z;
 
     public:
-        float e[3];
+        vec3()
+        {
+            this->x = 0;
+            this->y = 0;
+            this->z = 0;
+        }
+
+        vec3(float x, float y, float z)
+        {
+            this->x = x;
+            this->y = y;
+            this->z = z;
+        }
+
+        vec3 operator*(const float & f) const
+        {
+            vec3 ret;
+            ret.x = f * this->x;
+            ret.y = f * this->y;
+            ret.z = f * this->z;
+            return ret;
+        }
+
+        vec3 operator-(const vec3 & vect) const
+        {
+            vec3 ret;
+            ret.x = vect.x - this->x;
+            ret.y = vect.y - this->y;
+            ret.z = vect.z - this->z;
+            return ret;
+        }
+
+        friend std::ostream& operator<<(std::ostream & out, const vec3 & vect)
+        {
+            out << "Vector: (" << vect.x << ", " << vect.y << ", " << vect.z << ")";
+            return out;
+        }
 };
 
 // Type aliases for vec3
 using point3 = vec3;   // 3D point
 using color = vec3;    // RGB color
-
-std::ostream& operator<<(std::ostream & out, const vec3 & vect)
-{
-    out << "Vector: (" << vect.e[0] << ", " << vect.e[1] << ", " << vect.e[2] << ")";
-    return out;
-}
