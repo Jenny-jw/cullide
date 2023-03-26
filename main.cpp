@@ -1,6 +1,7 @@
 #include "../glad/gl.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "main.hpp"
 
 const color_t dark = {0.258f, 0.114f, 0.024f};
 const color_t milk = {1.0f, 0.98f, 0.957f};
