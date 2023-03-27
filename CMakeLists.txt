@@ -8,6 +8,7 @@ find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(assimp REQUIRED)
 
+set(CMAKE_CXX_FLAGS "-O0 -Wall -Wextra")
 
 add_executable(GL 
 	main.cpp 

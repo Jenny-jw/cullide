@@ -1,5 +1,9 @@
 #include "../glad/gl.h"
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <assimp/Importer.hpp>      // C++ importer interface
+#include <assimp/scene.h>           // Output data structure
+#include <assimp/postprocess.h>     // Post processing flags
 #include <iostream>
 #include "main.hpp"
 
@@ -19,6 +23,7 @@ int main(void)
     unsigned int vertexShader;
     unsigned int fragmentShader;
     unsigned int shaderProgram;
+    int totot;
 
     /* Initialize GLFW */
     if (!glfwInit())
