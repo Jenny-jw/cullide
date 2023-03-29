@@ -6,6 +6,9 @@
 #include <assimp/postprocess.h>     // Post processing flags
 #include <iostream>
 #include "main.hpp"
+#include "model.hpp"
+#include "mesh.hpp"
+#include "shader.hpp"
 
 const color_t dark = {0.258f, 0.114f, 0.024f};
 const color_t milk = {1.0f, 0.98f, 0.957f};
@@ -23,7 +26,7 @@ int main(void)
     unsigned int vertexShader;
     unsigned int fragmentShader;
     unsigned int shaderProgram;
-    int totot;
+    // int totot;
 
     /* Initialize GLFW */
     if (!glfwInit())

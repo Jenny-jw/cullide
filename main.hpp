@@ -1,3 +1,6 @@
+#ifndef MAIN_H
+#define MAIN_H
+
 void processInput(GLFWwindow *window);
 
 const char *vertexShaderSource = 
@@ -23,26 +26,4 @@ typedef struct color {
     float b;
 } color_t;
 
-/* Vector for colors, points in space and vectors*/
-class Vector3 {
-    private:
-        float x;
-        float y;
-        float z;
-
-    public:
-        Vector3 operator*(const float &) const;
-        Vector3 operator-(const Vector3 &) const;
-        friend std::ostream& operator<<(std::ostream &, const Vector3 &);
-};
-
-/* [TODO] define other utility classes like for instance Vector4
-or Ray, which represents a ray through its origin and direction*/
-
-class Image {
-    private:
-
-    public:
-        bool write(const std::string &) const;
-
-};
+#endif
