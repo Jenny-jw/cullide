@@ -1,32 +1,41 @@
 #include "../glad/gl.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <assimp/Importer.hpp>      // C++ importer interface
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>     // Post processing flags
 #include <iostream>
-#include "main.hpp"
-#include "model.hpp"
-#include "mesh.hpp"
+// #include "main.hpp" // vector shader & fragment shader
 #include "shader.hpp"
+#include "camera.hpp"
+#include "model.hpp" 
 
-const color_t dark = {0.258f, 0.114f, 0.024f};
-const color_t milk = {1.0f, 0.98f, 0.957f};
-const color_t mochi = {1.0f, 0.878f, 0.941f};
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window);
 
-color_t triangle_color = dark;
-bool color_changed = false;
-bool key_pressed = false;
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 int main(void)
 {
     GLFWwindow* window;
-    unsigned int VBO; // vertex buffer object
-    unsigned int VAO; // vertex array object
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-    unsigned int shaderProgram;
-    // int totot;
+    // unsigned int VBO; // vertex buffer object
+    // unsigned int VAO; // vertex array object
+    // unsigned int vertexShader;
+    // unsigned int fragmentShader;
+    // unsigned int shaderProgram;
+    // int width, height, nrChannels;
+    // unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
 
     /* Initialize GLFW */
     if (!glfwInit())
@@ -40,7 +49,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "mochi mochi :3", NULL, NULL);
+    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "mochi mochi :3", NULL, NULL);
    
     if (!window)
     {
@@ -51,6 +60,13 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     /* Initialize GLAD */
     if (!gladLoaderLoadGL())
     {
@@ -58,85 +74,94 @@ int main(void)
         return -1;
     }
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.3f, -0.3f, 0.0f,
-        0.0f, 0.5f, 0.0f
-    };
+    // /* Vertex shader */
+    // vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    // // attach the shader source code to the shader object and compile the shader
+    // glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    // glCompileShader(vertexShader);
 
-    glGenBuffers(1, &VBO); // generate a buffer with ID 1
-    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glGenVertexArrays(1, &VAO);
-    // 1. bind Vertex Array Object
-    glBindVertexArray(VAO);
-    // 2. copy our vertices array in a buffer for OpenGL to use
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // 3. then set the vertex attributes pointers
-    glVertexAttribPointer(0/*location of Position*/, 3/*size of vertex*/, GL_FLOAT, GL_FALSE, 3 * sizeof(float)/*the space between consecutive vertex*/, (void*)0);
-    glEnableVertexAttribArray(0);
+    // // check if compiling a shader program failed
+    // int success;
+    // char infoLog[512];
+    // glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    // if(!success) {
+    //     glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+    //     std::cout << "Vertex shader compile failed\n" <<
+    //     infoLog << std::endl;
+    // }
 
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    // attach the shader source code to the shader object and compile the shader
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
+    // /* Fragment shader */
+    // fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    // glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    // glCompileShader(fragmentShader);
 
-    // check if compiling a shader program failed
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if(!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "Vertex shader compile failed\n" <<
-        infoLog << std::endl;
-    }
+    // glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    // if(!success) {
+    //     glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+    //     std::cout << "Fragment shader compile failed\n" <<
+    //     infoLog << std::endl;
+    // }
 
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
+    // shaderProgram = glCreateProgram();
+    // glAttachShader(shaderProgram, vertexShader);
+    // glAttachShader(shaderProgram, fragmentShader);
+    // glLinkProgram(shaderProgram);
 
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "Fragment shader compile failed\n" <<
-        infoLog << std::endl;
-    }
+    // // check if linking a shader program failed
+    // glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    // if(!success) {
+    //     glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+    //     std::cout << "Shader link failed\n" <<
+    //     infoLog << std::endl;
+    // }
 
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    // //delete the shader objects
+    // glDeleteShader(vertexShader);
+    // glDeleteShader(fragmentShader); 
 
-    // check if linking a shader program failed
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "Shader link failed\n" <<
-        infoLog << std::endl;
-    }
+    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    stbi_set_flip_vertically_on_load(true);
 
-    //delete the shader objects
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader); 
+    // configure global opengl state
+    glEnable(GL_DEPTH_TEST);
 
+    // build and compile shaders
+    Shader ourShader("model_loading.vs", "model_loading.fs");
+        std::cout << "SHADER LOADED" << std::endl;
+    // load models
+    Model ourModel("/root/OpenGL/Projects/backpack.obj");
+std::cout << "MODEL OK" << std::endl;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        // per-frame time logic
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        /* input */
         processInput(window);
 
         /* Render here */
-        glClearColor(mochi.r, mochi.g, mochi.b, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(.5f, .5f, .5f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        // glUseProgram(shaderProgram);
+        /* Enable shader before setting uniforms */
+        ourShader.use();
 
-        triangle_color = (color_changed) ? dark : milk;
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
 
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, triangle_color.r, triangle_color.g, triangle_color.b, 1.0f);
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0/*starting index of the vertex array*/, 3);
+        // render the loaded model
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model);
+        ourModel.Draw(ourShader);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -149,19 +174,54 @@ int main(void)
     return 0;
 }
 
+/* Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly */
 void processInput(GLFWwindow *window)
 {
     
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+
+/* glfw: whenever the window size changed (by OS or user resize) this callback function executes */
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and 
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
+}
+
+/* glfw: whenever the mouse moves, this callback is called */
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
     {
-        key_pressed = true;
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
     }
-    if(glfwGetKey(window, GLFW_KEY_X) == GLFW_RELEASE)
-    {
-        if(key_pressed)
-            color_changed = !color_changed;
-        key_pressed = false;
-    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+/* glfw: whenever the mouse scroll wheel scrolls, this callback is called */
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }

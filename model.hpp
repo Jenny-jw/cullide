@@ -33,8 +33,9 @@ class Model
         string directory;
         bool gammaCorrection;
 
-        Model(char *path)
+        Model(string path)
         {
+            cout << "constructor" << endl;
             loadModel(path);
         }
 
@@ -48,16 +49,20 @@ class Model
     private:
         void loadModel(string path)
         {
+            cout << "HQLLOOO" << endl;
             Assimp::Importer import;
-            const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate |
-            aiProcess_FlipUVs);
-            if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-            !scene->mRootNode)
+            cout << "FUCK" << endl;
+            // FLAG: aiProcess_JoinIdenticalVertices: Join the identical vertices and adjust the index buffer accordingly -> save memory
+            const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+            cout << "MAYBE" << endl;
+            if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             {
-            cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
-            return;
+                cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
+                return;
             }
+            cout << "LOADOK" << endl;
             directory = path.substr(0, path.find_last_of("/"));
+            cout << "PROCESSNODE" << endl;
             processNode(scene->mRootNode, scene);
         }
         void processNode(aiNode *node, const aiScene *scene)
@@ -80,6 +85,8 @@ class Model
             vector<Vertex> vertices;
             vector<unsigned int> indices;
             vector<Texture> textures;
+
+            cout << "process mesh" << endl;
 
             // walk through each of the mesh's vertices
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -108,22 +115,30 @@ class Model
                     vec.x = mesh->mTextureCoords[0][i].x; 
                     vec.y = mesh->mTextureCoords[0][i].y;
                     vertex.TexCoords = vec;
-                    // tangent
-                    vector.x = mesh->mTangents[i].x;
+                    // tangent NULL POINTER
+                    //cout << mesh->mTangents[i].x << endl;
+                   /* vector.x = mesh->mTangents[i].x;
+                    cout << "X" << endl;
                     vector.y = mesh->mTangents[i].y;
+                    cout << "Y" << endl;
                     vector.z = mesh->mTangents[i].z;
+                    cout << "Z" << endl;
                     vertex.Tangent = vector;
-                    // bitangent
+
                     vector.x = mesh->mBitangents[i].x;
                     vector.y = mesh->mBitangents[i].y;
                     vector.z = mesh->mBitangents[i].z;
                     vertex.Bitangent = vector;
+
+                     cout << "WWWWW" << endl; */
                 }
                 else
                     vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 
                 vertices.push_back(vertex);
             }
+            cout << "process mesh long before" << endl;
+
             // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {
@@ -132,6 +147,8 @@ class Model
                 for(unsigned int j = 0; j < face.mNumIndices; j++)
                     indices.push_back(face.mIndices[j]);        
             }
+
+            cout << "process mesh before" << endl;
             // process materials
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];    
             // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
@@ -160,6 +177,8 @@ class Model
 
         vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName)
         {
+
+            cout << "load tex" << endl;
             vector<Texture> textures;
             for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
             {
