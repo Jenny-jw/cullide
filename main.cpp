@@ -1,6 +1,8 @@
 #include "../glad/gl.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp> // in Joey's source code but not sure if it's needed
+#include <glm/gtc/type_ptr.hpp> // same as above
 #include <iostream>
 // #include "main.hpp" // vector shader & fragment shader
 #include "shader.hpp"
@@ -127,10 +129,10 @@ int main(void)
 
     // build and compile shaders
     Shader ourShader("model_loading.vs", "model_loading.fs");
-        std::cout << "SHADER LOADED" << std::endl;
+    std::cout << "SHADER LOADED" << std::endl;
     // load models
-    Model ourModel("/root/OpenGL/Projects/backpack.obj");
-std::cout << "MODEL OK" << std::endl;
+    Model ourModel("/root/OpenGL/Projects/cube.obj");
+    std::cout << "MODEL OK" << std::endl;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -143,7 +145,7 @@ std::cout << "MODEL OK" << std::endl;
         processInput(window);
 
         /* Render here */
-        glClearColor(.5f, .5f, .5f, 1.0f);
+        glClearColor(.098f, .623f, .863f, .38f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // glUseProgram(shaderProgram);

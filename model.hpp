@@ -43,27 +43,23 @@ class Model
         void Draw(Shader &shader)
         {
             for(unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i].Draw(shader);
+                meshes[i].Draw(shader);
         }
 
     private:
         void loadModel(string path)
         {
-            cout << "HQLLOOO" << endl;
             Assimp::Importer import;
-            cout << "FUCK" << endl;
             // FLAG: aiProcess_JoinIdenticalVertices: Join the identical vertices and adjust the index buffer accordingly -> save memory
             const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
-            cout << "MAYBE" << endl;
             if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             {
                 cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
                 return;
             }
-            cout << "LOADOK" << endl;
             directory = path.substr(0, path.find_last_of("/"));
-            cout << "PROCESSNODE" << endl;
             processNode(scene->mRootNode, scene);
+            cout << "model loaded"<< endl;
         }
         void processNode(aiNode *node, const aiScene *scene)
         {
@@ -116,8 +112,8 @@ class Model
                     vec.y = mesh->mTextureCoords[0][i].y;
                     vertex.TexCoords = vec;
                     // tangent NULL POINTER
-                    //cout << mesh->mTangents[i].x << endl;
-                   /* vector.x = mesh->mTangents[i].x;
+                    // If decommand this part, there will be seg fault
+                    /*vector.x = mesh->mTangents[i].x;
                     cout << "X" << endl;
                     vector.y = mesh->mTangents[i].y;
                     cout << "Y" << endl;
@@ -128,9 +124,7 @@ class Model
                     vector.x = mesh->mBitangents[i].x;
                     vector.y = mesh->mBitangents[i].y;
                     vector.z = mesh->mBitangents[i].z;
-                    vertex.Bitangent = vector;
-
-                     cout << "WWWWW" << endl; */
+                    vertex.Bitangent = vector;*/
                 }
                 else
                     vertex.TexCoords = glm::vec2(0.0f, 0.0f);
@@ -177,8 +171,6 @@ class Model
 
         vector<Texture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName)
         {
-
-            cout << "load tex" << endl;
             vector<Texture> textures;
             for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
             {
@@ -231,6 +223,7 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        /* Generating mipmaps for filtered texture fetch */ 
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -238,6 +231,7 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        /* Freeing the now useless CPU memory */
         stbi_image_free(data);
     }
     else
