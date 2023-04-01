@@ -76,51 +76,6 @@ int main(void)
         return -1;
     }
 
-    // /* Vertex shader */
-    // vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    // // attach the shader source code to the shader object and compile the shader
-    // glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    // glCompileShader(vertexShader);
-
-    // // check if compiling a shader program failed
-    // int success;
-    // char infoLog[512];
-    // glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    // if(!success) {
-    //     glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    //     std::cout << "Vertex shader compile failed\n" <<
-    //     infoLog << std::endl;
-    // }
-
-    // /* Fragment shader */
-    // fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    // glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    // glCompileShader(fragmentShader);
-
-    // glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    // if(!success) {
-    //     glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-    //     std::cout << "Fragment shader compile failed\n" <<
-    //     infoLog << std::endl;
-    // }
-
-    // shaderProgram = glCreateProgram();
-    // glAttachShader(shaderProgram, vertexShader);
-    // glAttachShader(shaderProgram, fragmentShader);
-    // glLinkProgram(shaderProgram);
-
-    // // check if linking a shader program failed
-    // glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    // if(!success) {
-    //     glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-    //     std::cout << "Shader link failed\n" <<
-    //     infoLog << std::endl;
-    // }
-
-    // //delete the shader objects
-    // glDeleteShader(vertexShader);
-    // glDeleteShader(fragmentShader); 
-
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
 
@@ -129,13 +84,16 @@ int main(void)
 
     // build and compile shaders
     Shader ourShader("model_loading.vs", "model_loading.fs");
-    std::cout << "SHADER LOADED" << std::endl;
     // load models
     Model cubeModel("/root/OpenGL/Projects/cube.obj");
     std::cout << "MODEL1 OK" << std::endl;
     Model pinkCubeModel("/root/OpenGL/Projects/pinkCube.obj");
     std::cout << "MODEL2 OK" << std::endl;
     /* Loop until the user closes the window */
+
+    glm::vec3 translation_A(0.5f, 0.5f, 0.5f);
+    glm::vec3 translation_B(-0.5f, -0.5f, -0.5f);
+
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -150,24 +108,30 @@ int main(void)
         glClearColor(.5f, .5f, .5f, .5f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // glUseProgram(shaderProgram);
         /* Enable shader before setting uniforms */
         ourShader.use();
 
-        // view/projection transformations
+        /* view/projection transformations */
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
-        // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f); // initialize components on diagonal, remaining components initialized to 0.0f
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(.3f, .3f, .3f));	// it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        cubeModel.Draw(ourShader);
-        pinkCubeModel.Draw(ourShader);
-
+        /* Render the 1st loaded model */
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation_A);
+            model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
+            ourShader.setMat4("model", model);
+            cubeModel.Draw(ourShader);
+        }
+        /* Render the 2nd loaded model */
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation_B);
+            model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
+            ourShader.setMat4("model", model);
+            pinkCubeModel.Draw(ourShader);
+        }
+    
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
