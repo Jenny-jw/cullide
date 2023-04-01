@@ -131,7 +131,6 @@ class Model
 
                 vertices.push_back(vertex);
             }
-            cout << "process mesh long before" << endl;
 
             // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
@@ -142,7 +141,6 @@ class Model
                     indices.push_back(face.mIndices[j]);        
             }
 
-            cout << "process mesh before" << endl;
             // process materials
             aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];    
             // we assume a convention for sampler names in the shaders. Each diffuse texture should be named

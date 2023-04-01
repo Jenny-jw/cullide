@@ -131,8 +131,10 @@ int main(void)
     Shader ourShader("model_loading.vs", "model_loading.fs");
     std::cout << "SHADER LOADED" << std::endl;
     // load models
-    Model ourModel("/root/OpenGL/Projects/cube.obj");
-    std::cout << "MODEL OK" << std::endl;
+    Model cubeModel("/root/OpenGL/Projects/cube.obj");
+    std::cout << "MODEL1 OK" << std::endl;
+    Model pinkCubeModel("/root/OpenGL/Projects/pinkCube.obj");
+    std::cout << "MODEL2 OK" << std::endl;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -145,7 +147,7 @@ int main(void)
         processInput(window);
 
         /* Render here */
-        glClearColor(.098f, .623f, .863f, .38f);
+        glClearColor(.5f, .5f, .5f, .5f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // glUseProgram(shaderProgram);
@@ -159,11 +161,12 @@ int main(void)
         ourShader.setMat4("view", view);
 
         // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 model = glm::mat4(1.0f); // initialize components on diagonal, remaining components initialized to 0.0f
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(.3f, .3f, .3f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
+        cubeModel.Draw(ourShader);
+        pinkCubeModel.Draw(ourShader);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
