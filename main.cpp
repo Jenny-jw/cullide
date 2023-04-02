@@ -84,16 +84,18 @@ int main(void)
 
     // build and compile shaders
     Shader ourShader("model_loading.vs", "model_loading.fs");
+    // cout << "tori # of faces: " << cubeModel.mesh->mNumFaces << endl;
     // load models
-    Model cubeModel("/root/OpenGL/Projects/cube.obj");
+    Model cubeModel("/root/OpenGL/Projects/Objects/doughnut.obj");
     std::cout << "MODEL1 OK" << std::endl;
-    Model pinkCubeModel("/root/OpenGL/Projects/pinkCube.obj");
+    Model pinkCubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
+    // cout << "cube # of faces: " << pinkCubeModel.mesh->mNumFaces << endl;
     std::cout << "MODEL2 OK" << std::endl;
-    /* Loop until the user closes the window */
 
     glm::vec3 translation_A(0.5f, 0.5f, 0.5f);
-    glm::vec3 translation_B(-0.5f, -0.5f, -0.5f);
+    glm::vec3 translation_B(0.2f, 0.5f, 0.5f);
 
+    /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -107,6 +109,7 @@ int main(void)
         /* Render here */
         glClearColor(.5f, .5f, .5f, .5f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        cout << "finish clear buffer" << endl;
 
         /* Enable shader before setting uniforms */
         ourShader.use();
@@ -123,6 +126,7 @@ int main(void)
             model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
             ourShader.setMat4("model", model);
             cubeModel.Draw(ourShader);
+            cout << "Drawed 1st" << endl;
         }
         /* Render the 2nd loaded model */
         {
@@ -130,6 +134,7 @@ int main(void)
             model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
             ourShader.setMat4("model", model);
             pinkCubeModel.Draw(ourShader);
+            cout << "Drawed 2nd" << endl;
         }
     
         /* Swap front and back buffers */
@@ -145,8 +150,7 @@ int main(void)
 
 /* Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly */
 void processInput(GLFWwindow *window)
-{
-    
+{  
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

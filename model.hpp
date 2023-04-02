@@ -51,7 +51,7 @@ class Model
         {
             Assimp::Importer import;
             // FLAG: aiProcess_JoinIdenticalVertices: Join the identical vertices and adjust the index buffer accordingly -> save memory
-            const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+            const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_FlipUVs);
             if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             {
                 cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
@@ -59,17 +59,19 @@ class Model
             }
             directory = path.substr(0, path.find_last_of("/"));
             processNode(scene->mRootNode, scene);
-            cout << "model loaded"<< endl;
+            // cout << "# of root node: "<< &(scene->mRootNode) << endl;
         }
         void processNode(aiNode *node, const aiScene *scene)
         {
             // process all the node’s meshes (if any)
+            // cout << "# of meshes: " << node->mNumMeshes << endl;
             for(unsigned int i = 0; i < node->mNumMeshes; i++)
             {
                 aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
                 meshes.push_back(processMesh(mesh, scene));
             }
             // then do the same for each of its children
+            // cout << "# of childern: " << node->mNumChildren << endl;
             for(unsigned int i = 0; i < node->mNumChildren; i++)
             {
                 processNode(node->mChildren[i], scene);
@@ -79,11 +81,10 @@ class Model
         {
             // data to fill
             vector<Vertex> vertices;
-            vector<unsigned int> indices;
+            vector<unsigned int> indices; // strores 3 indices of a face/triangle
             vector<Texture> textures;
 
-            cout << "process mesh" << endl;
-
+            cout << "# of vertices: " << mesh->mNumVertices << endl;
             // walk through each of the mesh's vertices
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
             {
@@ -131,8 +132,8 @@ class Model
 
                 vertices.push_back(vertex);
             }
-
-            // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+            cout << "# of faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
+            /* walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices. */
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {
                 aiFace face = mesh->mFaces[i];
