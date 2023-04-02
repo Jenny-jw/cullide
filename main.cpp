@@ -13,6 +13,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+bool AABB(Model & A, Model & B);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -31,13 +32,6 @@ float lastFrame = 0.0f;
 int main(void)
 {
     GLFWwindow* window;
-    // unsigned int VBO; // vertex buffer object
-    // unsigned int VAO; // vertex array object
-    // unsigned int vertexShader;
-    // unsigned int fragmentShader;
-    // unsigned int shaderProgram;
-    // int width, height, nrChannels;
-    // unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
 
     /* Initialize GLFW */
     if (!glfwInit())
@@ -79,21 +73,26 @@ int main(void)
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
 
-    // configure global opengl state
+    /* configure global opengl state */
     glEnable(GL_DEPTH_TEST);
 
-    // build and compile shaders
+    /* build and compile shaders */
     Shader ourShader("model_loading.vs", "model_loading.fs");
-    // cout << "tori # of faces: " << cubeModel.mesh->mNumFaces << endl;
-    // load models
-    Model cubeModel("/root/OpenGL/Projects/Objects/doughnut.obj");
-    std::cout << "MODEL1 OK" << std::endl;
-    Model pinkCubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
-    // cout << "cube # of faces: " << pinkCubeModel.mesh->mNumFaces << endl;
-    std::cout << "MODEL2 OK" << std::endl;
 
+    /* load models */
+    Model cubeModel("/root/OpenGL/Projects/Objects/doughnut.obj");
+    Model pinkCubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
+    Model coneModel("/root/OpenGL/Projects/Objects/cone.obj");
+
+    /* Set locations for models */
     glm::vec3 translation_A(0.5f, 0.5f, 0.5f);
     glm::vec3 translation_B(0.2f, 0.5f, 0.5f);
+    glm::vec3 translation_C(-0.5f, -0.5f, -0.5f);
+
+    GLuint queryObjects[3];
+    glGenQueries(3, queryObjects);
+    for(int i = 0; i< 3; i++)
+        cout << queryObjects[i] << endl;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -109,7 +108,6 @@ int main(void)
         /* Render here */
         glClearColor(.5f, .5f, .5f, .5f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        cout << "finish clear buffer" << endl;
 
         /* Enable shader before setting uniforms */
         ourShader.use();
@@ -126,7 +124,13 @@ int main(void)
             model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
             ourShader.setMat4("model", model);
             cubeModel.Draw(ourShader);
-            cout << "Drawed 1st" << endl;
+            /* Update min xyz & max xyz values according to transform and scale matices*/
+            cubeModel.minX = (cubeModel.minX + model[0][3] * SCR_WIDTH) * model[0][0];
+            cubeModel.maxX = (cubeModel.maxX + model[0][3] * SCR_WIDTH) * model[0][0];
+            cubeModel.minY = (cubeModel.minY + model[1][3] * SCR_HEIGHT) * model[0][0];
+            cubeModel.maxY = (cubeModel.maxY + model[1][3] * SCR_HEIGHT) * model[0][0];
+            cubeModel.minZ = (cubeModel.minZ + model[2][3]) * model[0][0];
+            cubeModel.maxZ = (cubeModel.maxZ + model[2][3]) * model[0][0];
         }
         /* Render the 2nd loaded model */
         {
@@ -134,8 +138,33 @@ int main(void)
             model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
             ourShader.setMat4("model", model);
             pinkCubeModel.Draw(ourShader);
-            cout << "Drawed 2nd" << endl;
+            /* Update min xyz & max xyz values according to transform and scale matices*/
+            pinkCubeModel.minX = (pinkCubeModel.minX + model[0][3] * SCR_WIDTH) * model[0][0];
+            pinkCubeModel.maxX = (pinkCubeModel.maxX + model[0][3] * SCR_WIDTH) * model[0][0];
+            pinkCubeModel.minY = (pinkCubeModel.minY + model[1][3] * SCR_HEIGHT) * model[0][0];
+            pinkCubeModel.maxY = (pinkCubeModel.maxY + model[1][3] * SCR_HEIGHT) * model[0][0];
+            pinkCubeModel.minZ = (pinkCubeModel.minZ + model[2][3]) * model[0][0];
+            pinkCubeModel.maxZ = (pinkCubeModel.maxZ + model[2][3]) * model[0][0];
         }
+        /* Render the 3rd loaded model */
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation_C);
+            model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
+            ourShader.setMat4("model", model);
+            coneModel.Draw(ourShader);
+            /* Update min xyz & max xyz values according to transform and scale matices*/
+            coneModel.minX = (coneModel.minX + model[0][3] * SCR_WIDTH) * model[0][0];
+            coneModel.maxX = (coneModel.maxX + model[0][3] * SCR_WIDTH) * model[0][0];
+            coneModel.minY = (coneModel.minY + model[1][3] * SCR_HEIGHT) * model[0][0];
+            coneModel.maxY = (coneModel.maxY + model[1][3] * SCR_HEIGHT) * model[0][0];
+            coneModel.minZ = (coneModel.minZ + model[2][3]) * model[0][0];
+            coneModel.maxZ = (coneModel.maxZ + model[2][3]) * model[0][0];
+        }
+        bool t1, t2, t3;
+        t1 = AABB(cubeModel, pinkCubeModel);
+        t2 = AABB(cubeModel, coneModel);
+        t3 = AABB(pinkCubeModel, coneModel);
+        cout << t1 << t2 << t3 << endl;
     
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -146,6 +175,17 @@ int main(void)
 
     glfwTerminate();
     return 0;
+}
+
+bool AABB(Model & A, Model & B)
+{
+    bool collisionX, collisionY, collisionZ;
+    collisionX = (A.maxX >= B.minX) && (B.maxX >= A.minX);
+    collisionY = (A.maxY >= B.minY) && (B.maxY >= A.minY);
+    collisionZ = (A.maxZ >= B.minZ) && (B.maxZ >= A.minZ);
+    
+    // collision happens if 3 axes all overlap
+    return collisionX && collisionY && collisionZ;
 }
 
 /* Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly */

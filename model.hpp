@@ -22,8 +22,6 @@
 using namespace std;
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
-
-
 class Model
 {
     public:
@@ -32,10 +30,10 @@ class Model
         vector<Mesh> meshes;
         string directory;
         bool gammaCorrection;
+        float minX, minY, minZ, maxX, maxY, maxZ;
 
         Model(string path)
         {
-            cout << "constructor" << endl;
             loadModel(path);
         }
 
@@ -59,11 +57,10 @@ class Model
             }
             directory = path.substr(0, path.find_last_of("/"));
             processNode(scene->mRootNode, scene);
-            // cout << "# of root node: "<< &(scene->mRootNode) << endl;
         }
         void processNode(aiNode *node, const aiScene *scene)
         {
-            // process all the node’s meshes (if any)
+            /* process all the node’s meshes (if any) */ 
             // cout << "# of meshes: " << node->mNumMeshes << endl;
             for(unsigned int i = 0; i < node->mNumMeshes; i++)
             {
@@ -79,22 +76,45 @@ class Model
         }
         Mesh processMesh(aiMesh *mesh, const aiScene *scene)
         {
-            // data to fill
+            /* data to fill */ 
             vector<Vertex> vertices;
             vector<unsigned int> indices; // strores 3 indices of a face/triangle
             vector<Texture> textures;
 
-            cout << "# of vertices: " << mesh->mNumVertices << endl;
-            // walk through each of the mesh's vertices
+            cout << "# vertices: " << mesh->mNumVertices << endl;
+            
+            /* walk through each of the mesh's vertices */ 
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
             {
                 Vertex vertex;
                 glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
-                // positions
+                
+                /* positions */
                 vector.x = mesh->mVertices[i].x;
                 vector.y = mesh->mVertices[i].y;
                 vector.z = mesh->mVertices[i].z;
                 vertex.Position = vector;
+
+                /* Find the bounding box for AABB*/
+                if(i == 0)
+                {
+                    minX = vector.x;
+                    minY = vector.y;
+                    minZ = vector.z;
+                    maxX = vector.x;
+                    maxY = vector.y;
+                    maxZ = vector.z;
+                } 
+                else
+                {
+                    if(vector.x < minX) minX = vector.x;
+                    if(vector.y < minY) minY = vector.y;
+                    if(vector.z < minZ) minZ = vector.z;
+                    if(vector.x > maxX) maxX = vector.x;
+                    if(vector.y > maxX) maxY = vector.y;
+                    if(vector.z > maxX) maxZ = vector.z;
+                }
+                
                 // normals
                 if (mesh->HasNormals())
                 {
@@ -132,7 +152,8 @@ class Model
 
                 vertices.push_back(vertex);
             }
-            cout << "# of faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
+
+            cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
             /* walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices. */
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {
