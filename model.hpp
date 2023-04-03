@@ -32,10 +32,22 @@ class Model
         bool gammaCorrection;
         float minX, minY, minZ, maxX, maxY, maxZ;
         glm::vec4 MINs_t, MAXs_t;
+        glm::mat4 model;
 
-        Model(string path)
+        Model(string path, glm::mat4 Model)
         {
+            model = Model;
             loadModel(path);
+        }
+
+        void setModelMatrix(glm::mat4 Model)
+        {
+            model = Model;
+            cout << "Model matrix:" << endl;
+            cout << model[0][0] << " " << model[0][1] << " " << model[0][2] << " " << model[0][3] << endl;
+            cout << model[1][0] << " " << model[1][1] << " " << model[1][2] << " " << model[1][3] << endl;
+            cout << model[2][0] << " " << model[2][1] << " " << model[2][2] << " " << model[2][3] << endl;
+            cout << model[3][0] << " " << model[3][1] << " " << model[3][2] << " " << model[3][3] << endl;
         }
 
         /* loops over each of the meshes to call their respective Draw function */
@@ -81,6 +93,12 @@ class Model
             vector<Vertex> vertices;
             vector<unsigned int> indices; // strores 3 indices of a face/triangle
             vector<Texture> textures;
+
+            cout << "Model matrix is set!:" << endl;
+            cout << model[0][0] << " " << model[0][1] << " " << model[0][2] << " " << model[0][3] << endl;
+            cout << model[1][0] << " " << model[1][1] << " " << model[1][2] << " " << model[1][3] << endl;
+            cout << model[2][0] << " " << model[2][1] << " " << model[2][2] << " " << model[2][3] << endl;
+            cout << model[3][0] << " " << model[3][1] << " " << model[3][2] << " " << model[3][3] << endl;
             
             /* walk through each of the mesh's vertices */ 
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -106,8 +124,16 @@ class Model
                     MAXs.y = vector.y;
                     MINs.z = vector.z;
                     MAXs.z = vector.z;
-                    // MINs_t = model * glm::vec4(MINs, 1.0);
-                    // MAXs_t = model * glm::vec4(MAXs, 1.0);
+                    cout << "Before mX: " << MINs.x << ", MX: " << MAXs.x << endl;
+                    cout << "       mY: " << MINs.y << ", MY: " << MAXs.y << endl;
+                    cout << "       mZ: " << MINs.z << ", MY: " << MAXs.z << endl;
+                    MINs_t = model * glm::vec4(MINs, 1.0);
+                    MAXs_t = model * glm::vec4(MAXs, 1.0);
+                    cout << "i: " << i << ", mX: " << MINs_t[0] << ", MX: " << MAXs_t[0] << endl;
+                    cout << "   " << i << ", mY: " << MINs_t[1] << ", MY: " << MAXs_t[1] << endl;
+                    cout << "   " << i << ", mZ: " << MINs_t[2] << ", MZ: " << MAXs_t[2] << endl;
+                    cout << "   " << i << ", ??: " << MINs_t[3] << ", ??: " << MAXs_t[3] << endl;
+
                 } 
                 else
                 {   
@@ -117,8 +143,8 @@ class Model
                     test_MAXs.y = vector.y;
                     test_MAXs.z = vector.z;
                     test_MAXs.z = vector.z;
-                    // test_MINs_t = model * glm::vec4(test_MINs, 1.0);
-                    // test_MAXs_t = model * glm::vec4(test_MAXs, 1.0);
+                    test_MINs_t = model * glm::vec4(test_MINs, 1.0);
+                    test_MAXs_t = model * glm::vec4(test_MAXs, 1.0);
                     /* x's min/max of this model */
                     if(test_MINs_t[0] < MINs_t[0]) MINs_t[0] = test_MINs_t[0];
                     if(test_MAXs_t[0] > MAXs_t[0]) MAXs_t[0] = test_MAXs_t[0];
@@ -128,6 +154,16 @@ class Model
                     /* z's min/max of this model */
                     if(test_MINs_t[2] < MINs_t[2]) MINs_t[2] = test_MINs_t[2];
                     if(test_MAXs_t[2] > MAXs_t[2]) MAXs_t[2] = test_MAXs_t[2];
+                    
+                    if(i < 3) {
+                        cout << "i: " << i << ", mX: " << MINs_t[0] << ", MX: " << MAXs_t[0] << endl;
+                    }
+                    if(i < 3) {
+                        cout << "i: " << i << ", mY: " << MINs_t[1] << ", MY: " << MAXs_t[1] << endl;
+                    }
+                    if(i < 3) {
+                        cout << "i: " << i << ", mZ: " << MINs_t[2] << ", MZ: " << MAXs_t[2] << endl;
+                    }
                 }
                 
                 /* normals */ 
@@ -167,10 +203,10 @@ class Model
 
                 vertices.push_back(vertex);
             }
-            cout << "mX: " << minX << " MX: " << maxX << ", mY: " << minY << " MY: " << maxY << ", mZ: " << minZ << " MZ: " << maxZ << endl;
+            cout << "In the end, mX: " << MINs_t[0] << " MX: " << MAXs_t[0] << ", mY: " << MINs_t[1] << " MY: " << MAXs_t[1] << ", mZ: " << MINs_t[2] << " MZ: " << MAXs_t[2] << endl;
 
             cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
-            cout << "---------------------" << endl;
+            cout << "----------------------------------" << endl;
             /* walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices. */
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {
