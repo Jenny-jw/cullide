@@ -138,13 +138,23 @@ class Model
                 else
                 {   
                     test_MINs.x = vector.x;
-                    test_MINs.x = vector.x;
+                    test_MAXs.x = vector.x;
                     test_MINs.y = vector.y;
                     test_MAXs.y = vector.y;
-                    test_MAXs.z = vector.z;
+                    test_MINs.z = vector.z;
                     test_MAXs.z = vector.z;
                     test_MINs_t = model * glm::vec4(test_MINs, 1.0);
                     test_MAXs_t = model * glm::vec4(test_MAXs, 1.0);
+                    if(i < 3)
+                    {
+                        cout << "i = " << i << endl;
+                        // cout << "vecMin " << i << ", mX: " << vector.x << ", MX: " << test_MAXs_t[0] << endl;
+                        cout << "testX " << i << ", mX: " << test_MINs_t[0] << ", MX: " << test_MAXs_t[0] << endl;
+                        cout << "testY " << i << ", mY: " << test_MINs_t[1] << ", MY: " << test_MAXs_t[1] << endl;
+                        cout << "testZ " << i << ", mZ: " << test_MINs_t[2] << ", MZ: " << test_MAXs_t[2] << endl;
+                        cout << "test? " << i << ", ??: " << test_MINs_t[3] << ", ??: " << test_MAXs_t[3] << endl;
+                    }
+                    
                     /* x's min/max of this model */
                     if(test_MINs_t[0] < MINs_t[0]) MINs_t[0] = test_MINs_t[0];
                     if(test_MAXs_t[0] > MAXs_t[0]) MAXs_t[0] = test_MAXs_t[0];
