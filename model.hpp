@@ -31,6 +31,7 @@ class Model
         string directory;
         bool gammaCorrection;
         float minX, minY, minZ, maxX, maxY, maxZ;
+        glm::vec4 MINs_t, MAXs_t;
 
         Model(string path)
         {
@@ -80,8 +81,6 @@ class Model
             vector<Vertex> vertices;
             vector<unsigned int> indices; // strores 3 indices of a face/triangle
             vector<Texture> textures;
-
-            cout << "# vertices: " << mesh->mNumVertices << endl;
             
             /* walk through each of the mesh's vertices */ 
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -95,27 +94,43 @@ class Model
                 vector.z = mesh->mVertices[i].z;
                 vertex.Position = vector;
 
+                glm::vec3 MINs, MAXs, test_MINs, test_MAXs;
+                glm::vec4 test_MINs_t, test_MAXs_t;
+
                 /* Find the bounding box for AABB*/
                 if(i == 0)
                 {
-                    minX = vector.x;
-                    minY = vector.y;
-                    minZ = vector.z;
-                    maxX = vector.x;
-                    maxY = vector.y;
-                    maxZ = vector.z;
+                    MINs.x = vector.x;
+                    MAXs.x = vector.x;
+                    MINs.y = vector.y;
+                    MAXs.y = vector.y;
+                    MINs.z = vector.z;
+                    MAXs.z = vector.z;
+                    // MINs_t = model * glm::vec4(MINs, 1.0);
+                    // MAXs_t = model * glm::vec4(MAXs, 1.0);
                 } 
                 else
-                {
-                    if(vector.x < minX) minX = vector.x;
-                    if(vector.y < minY) minY = vector.y;
-                    if(vector.z < minZ) minZ = vector.z;
-                    if(vector.x > maxX) maxX = vector.x;
-                    if(vector.y > maxX) maxY = vector.y;
-                    if(vector.z > maxX) maxZ = vector.z;
+                {   
+                    test_MINs.x = vector.x;
+                    test_MINs.x = vector.x;
+                    test_MINs.y = vector.y;
+                    test_MAXs.y = vector.y;
+                    test_MAXs.z = vector.z;
+                    test_MAXs.z = vector.z;
+                    // test_MINs_t = model * glm::vec4(test_MINs, 1.0);
+                    // test_MAXs_t = model * glm::vec4(test_MAXs, 1.0);
+                    /* x's min/max of this model */
+                    if(test_MINs_t[0] < MINs_t[0]) MINs_t[0] = test_MINs_t[0];
+                    if(test_MAXs_t[0] > MAXs_t[0]) MAXs_t[0] = test_MAXs_t[0];
+                    /* y's min/max of this model */
+                    if(test_MINs_t[1] < MINs_t[1]) MINs_t[1] = test_MINs_t[1];
+                    if(test_MAXs_t[1] > MAXs_t[1]) MAXs_t[1] = test_MAXs_t[1];
+                    /* z's min/max of this model */
+                    if(test_MINs_t[2] < MINs_t[2]) MINs_t[2] = test_MINs_t[2];
+                    if(test_MAXs_t[2] > MAXs_t[2]) MAXs_t[2] = test_MAXs_t[2];
                 }
                 
-                // normals
+                /* normals */ 
                 if (mesh->HasNormals())
                 {
                     vector.x = mesh->mNormals[i].x;
@@ -123,7 +138,7 @@ class Model
                     vector.z = mesh->mNormals[i].z;
                     vertex.Normal = vector;
                 }
-                // texture coordinates
+                /* texture coordinates */ 
                 if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
                 {
                     glm::vec2 vec;
@@ -152,8 +167,10 @@ class Model
 
                 vertices.push_back(vertex);
             }
+            cout << "mX: " << minX << " MX: " << maxX << ", mY: " << minY << " MY: " << maxY << ", mZ: " << minZ << " MZ: " << maxZ << endl;
 
             cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
+            cout << "---------------------" << endl;
             /* walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices. */
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {

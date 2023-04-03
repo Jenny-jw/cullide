@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp> // in Joey's source code but not sure if it's needed
 #include <glm/gtc/type_ptr.hpp> // same as above
 #include <iostream>
+#include <stdbool.h>
 // #include "main.hpp" // vector shader & fragment shader
 #include "shader.hpp"
 #include "camera.hpp"
@@ -15,19 +16,22 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 bool AABB(Model & A, Model & B);
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+/* Screen size */
+const unsigned int SCR_WIDTH = 1000;
+const unsigned int SCR_HEIGHT = 750;
 
-// camera
+/* camera */
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// timing
+/* timing */
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+/* model transformations */
+glm::mat4 modelA, modelB, modelC;
 
 int main(void)
 {
@@ -80,8 +84,8 @@ int main(void)
     Shader ourShader("model_loading.vs", "model_loading.fs");
 
     /* load models */
-    Model cubeModel("/root/OpenGL/Projects/Objects/doughnut.obj");
-    Model pinkCubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
+    Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj");
+    Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
     Model coneModel("/root/OpenGL/Projects/Objects/cone.obj");
 
     /* Set locations for models */
@@ -94,6 +98,7 @@ int main(void)
     for(int i = 0; i< 3; i++)
         cout << queryObjects[i] << endl;
 
+    bool firstTime = 1;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -123,28 +128,100 @@ int main(void)
             glm::mat4 model = glm::translate(glm::mat4(1.0f), translation_A);
             model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
             ourShader.setMat4("model", model);
-            cubeModel.Draw(ourShader);
+            toriModel.Draw(ourShader);
             /* Update min xyz & max xyz values according to transform and scale matices*/
-            cubeModel.minX = (cubeModel.minX + model[0][3] * SCR_WIDTH) * model[0][0];
-            cubeModel.maxX = (cubeModel.maxX + model[0][3] * SCR_WIDTH) * model[0][0];
-            cubeModel.minY = (cubeModel.minY + model[1][3] * SCR_HEIGHT) * model[0][0];
-            cubeModel.maxY = (cubeModel.maxY + model[1][3] * SCR_HEIGHT) * model[0][0];
-            cubeModel.minZ = (cubeModel.minZ + model[2][3]) * model[0][0];
-            cubeModel.maxZ = (cubeModel.maxZ + model[2][3]) * model[0][0];
+            // if(firstTime)
+            {
+                // cout << "AminX_before " << toriModel.minX << endl;
+                // cout << "AmaxX_before " << toriModel.maxX << endl;
+                // cout << "AminY_before " << toriModel.minY << endl;
+                // cout << "AmaxY_before " << toriModel.maxY << endl;
+                // cout << "AminZ_before " << toriModel.minZ << endl;
+                // cout << "AmaxZ_before " << toriModel.maxZ << endl;
+
+                // glm::vec3 Amin, Amax;
+                // glm::vec4 Amin_t, Amax_t;
+                // Amin.x = toriModel.minX;
+                // Amin.y = toriModel.minY;
+                // Amin.z = toriModel.minZ;
+                // Amax.x = toriModel.maxX;
+                // Amax.y = toriModel.maxY;
+                // Amax.z = toriModel.maxZ;
+                // Amin_t = projection * view * model * glm::vec4(Amin, 1.0);
+                // Amax_t = projection * view * model * glm::vec4(Amax, 1.0);
+                // cout << "Amin_t: " << Amin_t[0] << " " << Amin_t[1] << " " << Amin_t[2] << " " << Amin_t[3] << endl;
+                // toriModel.minX = Amin_t[0];
+                // toriModel.minY = Amin_t[1];
+                // toriModel.minZ = Amin_t[2];
+                // toriModel.maxX = Amax_t[0];
+                // toriModel.maxY = Amax_t[1];
+                // toriModel.maxZ = Amax_t[2];
+
+                // toriModel.minX = (toriModel.minX + model[3][0] * 0.5 * SCR_WIDTH) * model[0][0];
+                // toriModel.maxX = (toriModel.maxX + model[3][0] * 0.5 * SCR_WIDTH) * model[0][0];
+                // toriModel.minY = (toriModel.minY + model[3][1] * 0.5 * SCR_HEIGHT) * model[1][1];
+                // toriModel.maxY = (toriModel.maxY + model[3][1] * 0.5 * SCR_HEIGHT) * model[1][1];
+                // toriModel.minZ = (toriModel.minZ + model[3][2]) * model[2][2];
+                // toriModel.maxZ = (toriModel.maxZ + model[3][2]) * model[2][2];
+                // cout << "AminX_after " << toriModel.minX << endl;
+                // cout << "AmaxX_after " << toriModel.maxX << endl;
+                // cout << "AminY_after " << toriModel.minY << endl;
+                // cout << "AmaxY_after " << toriModel.maxY << endl;
+                // cout << "AminZ_after " << toriModel.minZ << endl;
+                // cout << "AmaxZ_after " << toriModel.maxZ << endl;
+                // cout << "------------" << endl;
+            }
         }
         /* Render the 2nd loaded model */
         {
             glm::mat4 model = glm::translate(glm::mat4(1.0f), translation_B);
             model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
             ourShader.setMat4("model", model);
-            pinkCubeModel.Draw(ourShader);
+            cubeModel.Draw(ourShader);
             /* Update min xyz & max xyz values according to transform and scale matices*/
-            pinkCubeModel.minX = (pinkCubeModel.minX + model[0][3] * SCR_WIDTH) * model[0][0];
-            pinkCubeModel.maxX = (pinkCubeModel.maxX + model[0][3] * SCR_WIDTH) * model[0][0];
-            pinkCubeModel.minY = (pinkCubeModel.minY + model[1][3] * SCR_HEIGHT) * model[0][0];
-            pinkCubeModel.maxY = (pinkCubeModel.maxY + model[1][3] * SCR_HEIGHT) * model[0][0];
-            pinkCubeModel.minZ = (pinkCubeModel.minZ + model[2][3]) * model[0][0];
-            pinkCubeModel.maxZ = (pinkCubeModel.maxZ + model[2][3]) * model[0][0];
+            // if(firstTime)
+            {
+                // cout << "BminX_before " << cubeModel.minX << endl;
+                // cout << "BmaxX_before " << cubeModel.maxX << endl;
+                // cout << "BminY_before " << cubeModel.minY << endl;
+                // cout << "BmaxY_before " << cubeModel.maxY << endl;
+                // cout << "BminZ_before " << cubeModel.minZ << endl;
+                // cout << "BmaxZ_before " << cubeModel.maxZ << endl;
+
+                /* 1st try, only consider model matrix: seems wrong */
+                // cubeModel.minX = (cubeModel.minX + model[3][0] * 0.5 * SCR_WIDTH) * model[0][0];
+                // cubeModel.maxX = (cubeModel.maxX + model[3][0] * 0.5 * SCR_WIDTH) * model[0][0];
+                // cubeModel.minY = (cubeModel.minY + model[3][1] * 0.5 * SCR_HEIGHT) * model[1][1];
+                // cubeModel.maxY = (cubeModel.maxY + model[3][1] * 0.5 * SCR_HEIGHT) * model[1][1];
+                // cubeModel.minZ = (cubeModel.minZ + model[3][2]) * model[2][2];
+                // cubeModel.maxZ = (cubeModel.maxZ + model[3][2]) * model[2][2];
+
+                /* 2nd try, consider 3 matrices: seems wrong...? */
+                // glm::vec3 Bmin, Bmax;
+                // glm::vec4 Bmin_t, Bmax_t;
+                // Bmin.x = cubeModel.minX;
+                // Bmin.y = cubeModel.minY;
+                // Bmin.z = cubeModel.minZ;
+                // Bmax.x = cubeModel.maxX;
+                // Bmax.y = cubeModel.maxY;
+                // Bmax.z = cubeModel.maxZ;
+                // Bmin_t = projection * view * model * glm::vec4(Bmin, 1.0);
+                // Bmax_t = projection * view * model * glm::vec4(Bmax, 1.0);
+                // cout << "Bmin_t: " << Bmin_t[0] << " " << Bmin_t[1] << " " << Bmin_t[2] << " " << Bmin_t[3] << endl;
+                // cubeModel.minX = Bmin_t[0];
+                // cubeModel.minY = Bmin_t[1];
+                // cubeModel.minZ = Bmin_t[2];
+                // cubeModel.maxX = Bmax_t[0];
+                // cubeModel.maxY = Bmax_t[1];
+                // cubeModel.maxZ = Bmax_t[2];
+
+                // cout << "BminX_after " << cubeModel.minX << endl;
+                // cout << "BmaxX_after " << cubeModel.maxX << endl;
+                // cout << "BminY_after " << cubeModel.minY << endl;
+                // cout << "BmaxY_after " << cubeModel.maxY << endl;
+                // cout << "BminZ_after " << cubeModel.minZ << endl;
+                // cout << "BmaxZ_after " << cubeModel.maxZ << endl;
+            }
         }
         /* Render the 3rd loaded model */
         {
@@ -153,17 +230,35 @@ int main(void)
             ourShader.setMat4("model", model);
             coneModel.Draw(ourShader);
             /* Update min xyz & max xyz values according to transform and scale matices*/
-            coneModel.minX = (coneModel.minX + model[0][3] * SCR_WIDTH) * model[0][0];
-            coneModel.maxX = (coneModel.maxX + model[0][3] * SCR_WIDTH) * model[0][0];
-            coneModel.minY = (coneModel.minY + model[1][3] * SCR_HEIGHT) * model[0][0];
-            coneModel.maxY = (coneModel.maxY + model[1][3] * SCR_HEIGHT) * model[0][0];
-            coneModel.minZ = (coneModel.minZ + model[2][3]) * model[0][0];
-            coneModel.maxZ = (coneModel.maxZ + model[2][3]) * model[0][0];
+            // if(firstTime)
+            {
+                // cout << "CminX_before " << coneModel.minX << endl;
+                // cout << "CmaxX_before " << coneModel.maxX << endl;
+                // cout << "CminY_before " << coneModel.minY << endl;
+                // cout << "CmaxY_before " << coneModel.maxY << endl;
+                // cout << "CminZ_before " << coneModel.minZ << endl;
+                // cout << "CmaxZ_before " << coneModel.maxZ << endl;
+                // coneModel.minX = (coneModel.minX + model[3][0] * 0.5 * SCR_WIDTH) * model[0][0];
+                // coneModel.maxX = (coneModel.maxX + model[3][0] * 0.5 * SCR_WIDTH) * model[0][0];
+                // coneModel.minY = (coneModel.minY + model[3][1] * 0.5 * SCR_HEIGHT) * model[1][1];
+                // coneModel.maxY = (coneModel.maxY + model[3][1] * 0.5 * SCR_HEIGHT) * model[1][1];
+                // coneModel.minZ = (coneModel.minZ + model[3][2]) * model[2][2];
+                // coneModel.maxZ = (coneModel.maxZ + model[3][2]) * model[2][2];
+                // cout << "CminX_after " << coneModel.minX << endl;
+                // cout << "CmaxX_after " << coneModel.maxX << endl;
+                // cout << "CminY_after " << coneModel.minY << endl;
+                // cout << "CmaxY_after " << coneModel.maxY << endl;
+                // cout << "CminZ_after " << coneModel.minZ << endl;
+                // cout << "CmaxZ_after " << coneModel.maxZ << endl;
+            }
         }
-        bool t1, t2, t3;
-        t1 = AABB(cubeModel, pinkCubeModel);
-        t2 = AABB(cubeModel, coneModel);
-        t3 = AABB(pinkCubeModel, coneModel);
+
+        firstTime = 0;
+
+        bool t1 = 0, t2 = 0, t3 = 0;
+        t1 = AABB(toriModel, cubeModel); // 1
+        t2 = AABB(toriModel, coneModel); // 0
+        t3 = AABB(cubeModel, coneModel); // 0
         cout << t1 << t2 << t3 << endl;
     
         /* Swap front and back buffers */
@@ -180,11 +275,11 @@ int main(void)
 bool AABB(Model & A, Model & B)
 {
     bool collisionX, collisionY, collisionZ;
-    collisionX = (A.maxX >= B.minX) && (B.maxX >= A.minX);
-    collisionY = (A.maxY >= B.minY) && (B.maxY >= A.minY);
-    collisionZ = (A.maxZ >= B.minZ) && (B.maxZ >= A.minZ);
+    collisionX = (A.MAXs_t[0] >= B.MINs_t[0]) && (B.MAXs_t[0] >= A.MINs_t[0]);
+    collisionY = (A.MAXs_t[1] >= B.MINs_t[1]) && (B.MAXs_t[1] >= A.MINs_t[1]);
+    collisionZ = (A.MAXs_t[2] >= B.MINs_t[2]) && (B.MAXs_t[2] >= A.MINs_t[2]);
     
-    // collision happens if 3 axes all overlap
+    /* collision happens if 3 axes all overlap */
     return collisionX && collisionY && collisionZ;
 }
 
