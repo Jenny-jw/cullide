@@ -64,14 +64,12 @@ class Model
         void processNode(aiNode *node, const aiScene *scene)
         {
             /* process all the node’s meshes (if any) */ 
-            // cout << "# of meshes: " << node->mNumMeshes << endl;
             for(unsigned int i = 0; i < node->mNumMeshes; i++)
             {
                 aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
                 meshes.push_back(processMesh(mesh, scene));
             }
             // then do the same for each of its children
-            // cout << "# of childern: " << node->mNumChildren << endl;
             for(unsigned int i = 0; i < node->mNumChildren; i++)
             {
                 processNode(node->mChildren[i], scene);
@@ -83,12 +81,6 @@ class Model
             vector<Vertex> vertices;
             vector<unsigned int> indices; // strores 3 indices of a face/triangle
             vector<Texture> textures;
-
-            cout << "Model matrix is set!:" << endl;
-            cout << model[0][0] << " " << model[0][1] << " " << model[0][2] << " " << model[0][3] << endl;
-            cout << model[1][0] << " " << model[1][1] << " " << model[1][2] << " " << model[1][3] << endl;
-            cout << model[2][0] << " " << model[2][1] << " " << model[2][2] << " " << model[2][3] << endl;
-            cout << model[3][0] << " " << model[3][1] << " " << model[3][2] << " " << model[3][3] << endl;
             
             /* walk through each of the mesh's vertices */ 
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -105,7 +97,7 @@ class Model
                 glm::vec3 MINs, MAXs, test_MINs, test_MAXs;
                 glm::vec4 test_MINs_t, test_MAXs_t;
 
-                /* Find the bounding box for AABB*/
+                /* Find the bounding box for AABB in world space (model* origin coordinate)*/
                 if(i == 0)
                 {
                     MINs.x = vector.x;
@@ -116,11 +108,6 @@ class Model
                     MAXs.z = vector.z;
                     MINs_t = model * glm::vec4(MINs, 1.0);
                     MAXs_t = model * glm::vec4(MAXs, 1.0);
-                    cout << "i: " << i << ", mX: " << MINs_t[0] << ", MX: " << MAXs_t[0] << endl;
-                    cout << "   " << i << ", mY: " << MINs_t[1] << ", MY: " << MAXs_t[1] << endl;
-                    cout << "   " << i << ", mZ: " << MINs_t[2] << ", MZ: " << MAXs_t[2] << endl;
-                    cout << "   " << i << ", ??: " << MINs_t[3] << ", ??: " << MAXs_t[3] << endl;
-
                 } 
                 else
                 {   
@@ -183,10 +170,9 @@ class Model
 
                 vertices.push_back(vertex);
             }
-            cout << "In the end, mX: " << MINs_t[0] << " MX: " << MAXs_t[0] << ", mY: " << MINs_t[1] << " MY: " << MAXs_t[1] << ", mZ: " << MINs_t[2] << " MZ: " << MAXs_t[2] << endl;
 
             cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
-            cout << "----------------------------------" << endl;
+            cout << "---------------" << endl;
             /* walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices. */
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {
