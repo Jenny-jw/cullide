@@ -40,16 +40,6 @@ class Model
             loadModel(path);
         }
 
-        void setModelMatrix(glm::mat4 Model)
-        {
-            model = Model;
-            cout << "Model matrix:" << endl;
-            cout << model[0][0] << " " << model[0][1] << " " << model[0][2] << " " << model[0][3] << endl;
-            cout << model[1][0] << " " << model[1][1] << " " << model[1][2] << " " << model[1][3] << endl;
-            cout << model[2][0] << " " << model[2][1] << " " << model[2][2] << " " << model[2][3] << endl;
-            cout << model[3][0] << " " << model[3][1] << " " << model[3][2] << " " << model[3][3] << endl;
-        }
-
         /* loops over each of the meshes to call their respective Draw function */
         void Draw(Shader &shader)
         {
@@ -124,9 +114,6 @@ class Model
                     MAXs.y = vector.y;
                     MINs.z = vector.z;
                     MAXs.z = vector.z;
-                    cout << "Before mX: " << MINs.x << ", MX: " << MAXs.x << endl;
-                    cout << "       mY: " << MINs.y << ", MY: " << MAXs.y << endl;
-                    cout << "       mZ: " << MINs.z << ", MY: " << MAXs.z << endl;
                     MINs_t = model * glm::vec4(MINs, 1.0);
                     MAXs_t = model * glm::vec4(MAXs, 1.0);
                     cout << "i: " << i << ", mX: " << MINs_t[0] << ", MX: " << MAXs_t[0] << endl;
@@ -145,35 +132,18 @@ class Model
                     test_MAXs.z = vector.z;
                     test_MINs_t = model * glm::vec4(test_MINs, 1.0);
                     test_MAXs_t = model * glm::vec4(test_MAXs, 1.0);
-                    if(i < 3)
-                    {
-                        cout << "i = " << i << endl;
-                        // cout << "vecMin " << i << ", mX: " << vector.x << ", MX: " << test_MAXs_t[0] << endl;
-                        cout << "testX " << i << ", mX: " << test_MINs_t[0] << ", MX: " << test_MAXs_t[0] << endl;
-                        cout << "testY " << i << ", mY: " << test_MINs_t[1] << ", MY: " << test_MAXs_t[1] << endl;
-                        cout << "testZ " << i << ", mZ: " << test_MINs_t[2] << ", MZ: " << test_MAXs_t[2] << endl;
-                        cout << "test? " << i << ", ??: " << test_MINs_t[3] << ", ??: " << test_MAXs_t[3] << endl;
-                    }
                     
                     /* x's min/max of this model */
                     if(test_MINs_t[0] < MINs_t[0]) MINs_t[0] = test_MINs_t[0];
                     if(test_MAXs_t[0] > MAXs_t[0]) MAXs_t[0] = test_MAXs_t[0];
+
                     /* y's min/max of this model */
                     if(test_MINs_t[1] < MINs_t[1]) MINs_t[1] = test_MINs_t[1];
                     if(test_MAXs_t[1] > MAXs_t[1]) MAXs_t[1] = test_MAXs_t[1];
+
                     /* z's min/max of this model */
                     if(test_MINs_t[2] < MINs_t[2]) MINs_t[2] = test_MINs_t[2];
                     if(test_MAXs_t[2] > MAXs_t[2]) MAXs_t[2] = test_MAXs_t[2];
-                    
-                    if(i < 3) {
-                        cout << "i: " << i << ", mX: " << MINs_t[0] << ", MX: " << MAXs_t[0] << endl;
-                    }
-                    if(i < 3) {
-                        cout << "i: " << i << ", mY: " << MINs_t[1] << ", MY: " << MAXs_t[1] << endl;
-                    }
-                    if(i < 3) {
-                        cout << "i: " << i << ", mZ: " << MINs_t[2] << ", MZ: " << MAXs_t[2] << endl;
-                    }
                 }
                 
                 /* normals */ 
