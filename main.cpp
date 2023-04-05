@@ -14,7 +14,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-bool AABB(Model & A, Model & B);
+void AABB(Model & A, Model & B);
 
 /* Screen size */
 const unsigned int SCR_WIDTH = 1000;
@@ -32,6 +32,10 @@ float lastFrame = 0.0f;
 
 /* model transformations */
 glm::mat4 modelA, modelB, modelC;
+
+/* Potencial colliding Set */
+Model * PCS[3];
+int numCollision;
 
 int main(void)
 {
@@ -101,6 +105,8 @@ int main(void)
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        numCollision = 0;
+
         // per-frame time logic
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -126,30 +132,30 @@ int main(void)
         glm::mat4 modelA = glm::translate(glm::mat4(1.0f), translation_A);
         modelA = glm::scale(modelA, glm::vec3(.2f, .2f, .2f));	// scale down the model in the scene           
         Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj", modelA); // load model and pass in the model matrix
-        ourShader.setMat4("modelA", modelA);
-        toriModel.Draw(ourShader);
-        
+        // after loading the model, min/max are calculated, so we can do AABB
+        // after AABB, colliding models are stored in PCS -> the occlusio query
+        // ourShader.setMat4("modelA", modelA);
+        // toriModel.Draw(ourShader);
 
         /* Render the 2nd loaded model */
         glm::mat4 modelB = glm::translate(glm::mat4(1.0f), translation_B);
         modelB = glm::scale(modelB, glm::vec3(.2f, .2f, .2f));    
         Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj", modelB);
-        ourShader.setMat4("modelB", modelB);
-        cubeModel.Draw(ourShader);
+        // ourShader.setMat4("modelB", modelB);
+        // cubeModel.Draw(ourShader);
 
         /* Render the 3rd loaded model */
         glm::mat4 modelC = glm::translate(glm::mat4(1.0f), translation_C);
         modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
         Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
-        ourShader.setMat4("modelC", modelC);
-        coneModel.Draw(ourShader);
+        // ourShader.setMat4("modelC", modelC);
+        // coneModel.Draw(ourShader);
 
-        bool t1 = 0, t2 = 0, t3 = 0;
-        t1 = AABB(toriModel, cubeModel); // 1
-        t2 = AABB(toriModel, coneModel); // 0
-        t3 = AABB(cubeModel, coneModel); // 0
-        cout << t1 << t2 << t3 << endl;
-    
+        /* object level pruning */
+        AABB(toriModel, cubeModel); // 1
+        AABB(toriModel, coneModel); // 0
+        AABB(cubeModel, coneModel); // 0
+
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
@@ -161,15 +167,33 @@ int main(void)
     return 0;
 }
 
-bool AABB(Model & A, Model & B)
+void AABB(Model & A, Model & B)
 {
+    // either the numCollision wasn't updated, or all the models collide
+    if(numCollision == 3) return;
+
     bool collisionX, collisionY, collisionZ;
     collisionX = (A.MAXs_t[0] >= B.MINs_t[0]) && (B.MAXs_t[0] >= A.MINs_t[0]);
     collisionY = (A.MAXs_t[1] >= B.MINs_t[1]) && (B.MAXs_t[1] >= A.MINs_t[1]);
     collisionZ = (A.MAXs_t[2] >= B.MINs_t[2]) && (B.MAXs_t[2] >= A.MINs_t[2]);
+
+    if(collisionX && collisionY && collisionZ)
+    {
+        if(numCollision == 0)
+        {
+            numCollision += 2;
+            PCS[0] = &A;
+            PCS[1] = &B;
+        }else { /* only PCS[2] is empty */
+            numCollision++;
+            /* If the model has been in PCS, the other colliding model is stored at PCS[2] */
+            if(PCS[0] == &A || PCS[1] == &A) PCS[2] = &B;
+            if(PCS[0] == &B || PCS[1] == &B) PCS[2] = &A;
+        }
+    }
     
     /* collision happens if 3 axes all overlap */
-    return collisionX && collisionY && collisionZ;
+    // return collisionX && collisionY && collisionZ;
 }
 
 /* Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly */
