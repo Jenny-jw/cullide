@@ -171,8 +171,8 @@ class Model
                 vertices.push_back(vertex);
             }
 
-            cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
-            cout << "---------------" << endl;
+            // cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
+            // cout << "---------------" << endl;
             /* walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices. */
             for(unsigned int i = 0; i < mesh->mNumFaces; i++)
             {

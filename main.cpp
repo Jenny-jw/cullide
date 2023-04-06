@@ -86,7 +86,7 @@ int main(void)
 
     /* build and compile shaders */
     Shader ourShader("/root/OpenGL/Projects/model_loading.vs", "/root/OpenGL/Projects/model_loading.fs");
-
+    
     /* load models */
     // Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj");
     // Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
@@ -97,10 +97,14 @@ int main(void)
     glm::vec3 translation_B(0.2f, 0.5f, 0.5f);
     glm::vec3 translation_C(-0.5f, -0.5f, -0.5f);
 
+    glm::mat4 modelA = glm::translate(glm::mat4(1.0f), translation_A);
+    modelA = glm::scale(modelA, glm::vec3(.2f, .2f, .2f));	// scale down the model in the scene           
+    Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj", modelA); // load model and pass in the model matrix
     // GLuint queryObjects[3];
+    // GLuint pixelCount;
     // glGenQueries(3, queryObjects);
     // for(int i = 0; i< 3; i++)
-    //     cout << queryObjects[i] << endl;
+    //     cout <<  "queryObjects"<< queryObjects[i] << endl;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -116,7 +120,7 @@ int main(void)
         processInput(window);
 
         /* Render here */
-        glClearColor(.5f, .5f, .5f, .5f);
+        glClearColor(.26f, .26f, .26f, .7f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Enable shader before setting uniforms */
@@ -128,33 +132,74 @@ int main(void)
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
-        /* Render the 1st loaded model */
-        glm::mat4 modelA = glm::translate(glm::mat4(1.0f), translation_A);
-        modelA = glm::scale(modelA, glm::vec3(.2f, .2f, .2f));	// scale down the model in the scene           
-        Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj", modelA); // load model and pass in the model matrix
+        /* Render the 1st loaded model: moved out of loop for testing */
+        
         // after loading the model, min/max are calculated, so we can do AABB
         // after AABB, colliding models are stored in PCS -> the occlusio query
-        // ourShader.setMat4("modelA", modelA);
-        // toriModel.Draw(ourShader);
+        ourShader.setMat4("modelA", modelA);
+        toriModel.Draw(ourShader);
 
         /* Render the 2nd loaded model */
         glm::mat4 modelB = glm::translate(glm::mat4(1.0f), translation_B);
         modelB = glm::scale(modelB, glm::vec3(.2f, .2f, .2f));    
         Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj", modelB);
-        // ourShader.setMat4("modelB", modelB);
-        // cubeModel.Draw(ourShader);
+        ourShader.setMat4("modelB", modelB);
+        cubeModel.Draw(ourShader);
 
         /* Render the 3rd loaded model */
         glm::mat4 modelC = glm::translate(glm::mat4(1.0f), translation_C);
         modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
         Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
-        // ourShader.setMat4("modelC", modelC);
-        // coneModel.Draw(ourShader);
+        ourShader.setMat4("modelC", modelC);
+        coneModel.Draw(ourShader);
 
-        /* object level pruning */
+        /* Do the AABB here?*/
         AABB(toriModel, cubeModel); // 1
         AABB(toriModel, coneModel); // 0
         AABB(cubeModel, coneModel); // 0
+
+        // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        
+        // for (int i = 0; i < 3 /* total number of objects */; i++)
+        // {
+        //     // glDepthMask(GL_FALSE); // goal: perform the depth test on all fragments and discard them accordingly, but not update the depth buffer
+        //     glDepthFunc(GL_GEQUAL); // Passes if the incoming depth value is greater than or equal to the stored depth value.
+            
+        //     /* Decompose object into sub-objects here? */
+
+        //     for (int j = 0; j < numCollision; j++)
+        //     {
+        //         /* Render sub-object j using occlusion query */
+        //         glBeginQuery(GL_SAMPLES_PASSED, i);
+        //         // !! render bounding box for sub-object j (use the min/max?)
+        //         // like this: ?
+        //         // glDrawArrays(GL_TRIANGLES, 0, 8); // each cuboid has 8 vertices
+        //         // or, glDrawElements(GL_TRIANGLES, /*number of elements to be rendered*/, GL_UNSIGNED_INT, NULL);
+        //         // glDrawElements(GL_TRIANGLES, 1, GL_UNSIGNED_INT, NULL);
+        //         glEndQuery(GL_SAMPLES_PASSED);
+                
+        //         // Number of pixels passed: if it > 0, rander the objest
+        //         int Passed = 0;
+        //         glGetQueryObjectiv(i, GL_QUERY_RESULT, &Passed);
+
+        //         // if(Passed > 0)
+        //     }
+
+        //     // glDepthMask(GL_TRUE);
+        //     glDepthFunc(GL_LEQUAL); // Passes if the incoming depth value is less than or equal to the stored depth value.
+            
+        //     for (int j = 0; j < numCollision; j++)
+        //     {
+        //         // Render sub-object j
+        //     }
+
+        //     for (int j = 0; j < numCollision; j++)
+        //     {
+        //         // Test if sub-object j is visible repect to depth buffer.
+        //         // If it's not fully visible, note it as fully visible ?!
+                
+        //     }
+        // }
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -177,6 +222,7 @@ void AABB(Model & A, Model & B)
     collisionY = (A.MAXs_t[1] >= B.MINs_t[1]) && (B.MAXs_t[1] >= A.MINs_t[1]);
     collisionZ = (A.MAXs_t[2] >= B.MINs_t[2]) && (B.MAXs_t[2] >= A.MINs_t[2]);
 
+    /* collision happens if 3 axes all overlap */
     if(collisionX && collisionY && collisionZ)
     {
         if(numCollision == 0)
@@ -191,8 +237,6 @@ void AABB(Model & A, Model & B)
             if(PCS[0] == &B || PCS[1] == &B) PCS[2] = &A;
         }
     }
-    
-    /* collision happens if 3 axes all overlap */
     // return collisionX && collisionY && collisionZ;
 }
 
