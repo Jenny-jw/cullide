@@ -5,6 +5,7 @@ layout (location = 2) in vec2 aTexCoords;
 
 out vec2 TexCoords;
 
+// INPUT from the c program by setMat4()
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;

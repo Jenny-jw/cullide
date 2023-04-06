@@ -87,7 +87,7 @@ int main(void)
     /* build and compile shaders */
     Shader ourShader("/root/OpenGL/Projects/model_loading.vs", "/root/OpenGL/Projects/model_loading.fs");
     
-    /* load models */
+    
     // Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj");
     // Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
     // Model coneModel("/root/OpenGL/Projects/Objects/cone.obj");
@@ -97,9 +97,19 @@ int main(void)
     glm::vec3 translation_B(0.2f, 0.5f, 0.5f);
     glm::vec3 translation_C(-0.5f, -0.5f, -0.5f);
 
+    /* load models */
     glm::mat4 modelA = glm::translate(glm::mat4(1.0f), translation_A);
     modelA = glm::scale(modelA, glm::vec3(.2f, .2f, .2f));	// scale down the model in the scene           
     Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj", modelA); // load model and pass in the model matrix
+
+    glm::mat4 modelB = glm::translate(glm::mat4(1.0f), translation_B);
+    modelB = glm::scale(modelB, glm::vec3(.2f, .2f, .2f));    
+    Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj", modelB);
+
+    glm::mat4 modelC = glm::translate(glm::mat4(1.0f), translation_C);
+    modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
+    Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
+
     // GLuint queryObjects[3];
     // GLuint pixelCount;
     // glGenQueries(3, queryObjects);
@@ -133,24 +143,15 @@ int main(void)
         ourShader.setMat4("view", view);
 
         /* Render the 1st loaded model: moved out of loop for testing */
-        
-        // after loading the model, min/max are calculated, so we can do AABB
-        // after AABB, colliding models are stored in PCS -> the occlusio query
-        ourShader.setMat4("modelA", modelA);
+        ourShader.setMat4("model", toriModel.model);
         toriModel.Draw(ourShader);
 
         /* Render the 2nd loaded model */
-        glm::mat4 modelB = glm::translate(glm::mat4(1.0f), translation_B);
-        modelB = glm::scale(modelB, glm::vec3(.2f, .2f, .2f));    
-        Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj", modelB);
-        ourShader.setMat4("modelB", modelB);
+        ourShader.setMat4("model", cubeModel.model);
         cubeModel.Draw(ourShader);
 
         /* Render the 3rd loaded model */
-        glm::mat4 modelC = glm::translate(glm::mat4(1.0f), translation_C);
-        modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
-        Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
-        ourShader.setMat4("modelC", modelC);
+        ourShader.setMat4("model", coneModel.model);
         coneModel.Draw(ourShader);
 
         /* Do the AABB here?*/

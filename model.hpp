@@ -34,7 +34,7 @@ class Model
         glm::vec4 MINs_t, MAXs_t;
         glm::mat4 model;
 
-        Model(string path, glm::mat4 Model)
+        Model(string path, glm::mat4 &Model)
         {
             model = Model;
             loadModel(path);
