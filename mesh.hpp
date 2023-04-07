@@ -35,19 +35,30 @@ struct Texture {
 
 class Mesh {
     public:
-        // mesh data
         vector<Vertex> vertices;
         vector<unsigned int> indices;
         vector<Texture> textures;
         unsigned int VAO;
+        
+        GLfloat boundingBoxVertex[72];
+        vector<unsigned int> boxIndices;
+        unsigned int VAO_box; //!!
 
-        // 1. constructor
+        // 1. constructor for models
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
         {
             this->vertices = vertices;
             this->indices = indices;
             this->textures = textures;
             setupMesh();
+        }
+
+        // constructor for bounding boxses
+        Mesh(GLfloat & boundingBoxVertex, vector<unsigned int> boxIndices) // type of vertices!
+        {
+            this->boundingBoxVertex = boundingBoxVertex;
+            this->boxIndices = boxIndices;
+            setupMesh_box();
         }
 
         // 3. draw(rander) the mesh
@@ -76,7 +87,7 @@ class Mesh {
                 glBindTexture(GL_TEXTURE_2D, textures[i].id);
             }
 
-            // draw mesh
+            // draw mesh (model)
             glBindVertexArray(VAO);
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
@@ -87,22 +98,25 @@ class Mesh {
 
     private:
         // render data
-        unsigned int /*VAO, */VBO, EBO; // VAO was decalred earlier
+        unsigned int VBO, EBO;
+        unsigned int VBO_box, EBO_box;
         
         // 2. initialize the buffers/arrays
         void setupMesh()
         {
-            /* Create buffers/arrays */
+            /* Generate and bind the vao */
             glGenVertexArrays(1, &VAO);
-            glGenBuffers(1, &VBO);
-            glGenBuffers(1, &EBO);
-            
             glBindVertexArray(VAO);
-            /* Load data into vertex buffers */
+
+            /* Generate and bind the vertex buffer object */
+            glGenBuffers(1, &VBO);
             glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-            
+
+            /* Generate and bind the element buffer object */
+            glGenBuffers(1, &EBO);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
             
             /* Set the vertex attribute pointers*/
@@ -129,6 +143,28 @@ class Mesh {
             glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
             
             glBindVertexArray(0);
+        }
+
+        void setupMesh_box()
+        {
+            /* Generate and bind the vao */
+            glGenVertexArrays(1, &VAO_box);
+            glBindVertexArray(VAO_box);
+
+            /* Generate and bind the vertex buffer object */
+            glGenBuffers(1, &VBO_box);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO_box);
+
+            /* Generate and bind the element buffer object */
+            glGenBuffers(1, &EBO_box);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_box);
+
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*6*4*3, boundingBoxVertex, GL_STATIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*6*2*3, boxIndices, GL_STATIC_DRAW);
+
+            // set up generic attrib pointers
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), (char*)0 + 0*sizeof(GLfloat));
         }
 };
 

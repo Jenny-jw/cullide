@@ -85,12 +85,8 @@ int main(void)
     glEnable(GL_DEPTH_TEST);
 
     /* build and compile shaders */
-    Shader ourShader("/root/OpenGL/Projects/model_loading.vs", "/root/OpenGL/Projects/model_loading.fs");
-    
-    
-    // Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj");
-    // Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj");
-    // Model coneModel("/root/OpenGL/Projects/Objects/cone.obj");
+    Shader ModelShader("/root/OpenGL/Projects/modelVertexShader.vs", "/root/OpenGL/Projects/modelFragmentShader.fs");  
+    Shader QueryShader("/root/OpenGL/Projects/queryVertexShader.vs", "/root/OpenGL/Projects/queryFragmentShader.fs");
 
     /* Set locations for models */
     glm::vec3 translation_A(0.5f, 0.5f, 0.5f);
@@ -110,17 +106,30 @@ int main(void)
     modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
     Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
 
+    /* Do the AABB here?
+    Since the models are not moving, we can do AABB outside of the loop*/
+    numCollision = 0;
+    AABB(toriModel, cubeModel); // 1
+    AABB(toriModel, coneModel); // 0
+    AABB(cubeModel, coneModel); // 0
+    cout << coneModel.MINs_t[0] << " " << coneModel.MAXs_t[0] << " "  << coneModel.MINs_t[1] << " " << coneModel.MAXs_t[1] << " " << coneModel.MINs_t[2] << " " << coneModel.MAXs_t[2] << endl;
+
+    /* Bounding box for occlusion query */
+    
+    // Mesh boundingBox(?, boxIndices, ?)
+
     // GLuint queryObjects[3];
     // GLuint pixelCount;
-    // glGenQueries(3, queryObjects);
+    // glGenQueries(3, &queryObjects);
     // for(int i = 0; i< 3; i++)
-    //     cout <<  "queryObjects"<< queryObjects[i] << endl;
+    //     cout <<  "queryObjects "<< queryObjects[i] << endl;
+    GLuint occlusionQuery;
+    GLuint pixelCount;
+    glGenQueries(1, &occlusionQuery);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        numCollision = 0;
-
         // per-frame time logic
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -134,73 +143,70 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /* Enable shader before setting uniforms */
-        ourShader.use();
+        ModelShader.use();
 
         /* view/projection transformations */
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        ModelShader.setMat4("projection", projection);
+        ModelShader.setMat4("view", view);
 
-        /* Render the 1st loaded model: moved out of loop for testing */
-        ourShader.setMat4("model", toriModel.model);
-        toriModel.Draw(ourShader);
+        /* Render the 1st loaded model */
+        ModelShader.setMat4("model", toriModel.model);
+        toriModel.Draw(ModelShader);
 
         /* Render the 2nd loaded model */
-        ourShader.setMat4("model", cubeModel.model);
-        cubeModel.Draw(ourShader);
+        ModelShader.setMat4("model", cubeModel.model);
+        cubeModel.Draw(ModelShader);
 
         /* Render the 3rd loaded model */
-        ourShader.setMat4("model", coneModel.model);
-        coneModel.Draw(ourShader);
-
-        /* Do the AABB here?*/
-        AABB(toriModel, cubeModel); // 1
-        AABB(toriModel, coneModel); // 0
-        AABB(cubeModel, coneModel); // 0
-
-        // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        ModelShader.setMat4("model", coneModel.model);
+        coneModel.Draw(ModelShader);
         
-        // for (int i = 0; i < 3 /* total number of objects */; i++)
-        // {
-        //     // glDepthMask(GL_FALSE); // goal: perform the depth test on all fragments and discard them accordingly, but not update the depth buffer
-        //     glDepthFunc(GL_GEQUAL); // Passes if the incoming depth value is greater than or equal to the stored depth value.
-            
-        //     /* Decompose object into sub-objects here? */
+        for (int i = 0; i < 3 /* total number of objects */; i++)
+        {
+            /* goal: perform the depth test on all fragments and discard them accordingly, but not update the depth buffer */          
+            glDepthMask(GL_FALSE);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            // glUseProgram(query_shader_program);
+            QueryShader.use();
+            glDepthFunc(GL_GEQUAL); // Passes if the incoming depth value is greater than or equal to the stored depth value. 
 
-        //     for (int j = 0; j < numCollision; j++)
-        //     {
-        //         /* Render sub-object j using occlusion query */
-        //         glBeginQuery(GL_SAMPLES_PASSED, i);
-        //         // !! render bounding box for sub-object j (use the min/max?)
-        //         // like this: ?
-        //         // glDrawArrays(GL_TRIANGLES, 0, 8); // each cuboid has 8 vertices
-        //         // or, glDrawElements(GL_TRIANGLES, /*number of elements to be rendered*/, GL_UNSIGNED_INT, NULL);
-        //         // glDrawElements(GL_TRIANGLES, 1, GL_UNSIGNED_INT, NULL);
-        //         glEndQuery(GL_SAMPLES_PASSED);
+            /* Decompose object into sub-objects here? */
+
+            for (int j = 0; j < numCollision /*should be num of sub-objects*/; j++)
+            {
+                /* Render sub-object j using occlusion query */
+                glBeginQuery(GL_SAMPLES_PASSED, occlusionQuery);
+                // !! render bounding box for sub-object j (use the min/max?)
+                glBindVertexArray(VAO_box);
+                glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
                 
-        //         // Number of pixels passed: if it > 0, rander the objest
-        //         int Passed = 0;
-        //         glGetQueryObjectiv(i, GL_QUERY_RESULT, &Passed);
-
-        //         // if(Passed > 0)
-        //     }
-
-        //     // glDepthMask(GL_TRUE);
-        //     glDepthFunc(GL_LEQUAL); // Passes if the incoming depth value is less than or equal to the stored depth value.
-            
-        //     for (int j = 0; j < numCollision; j++)
-        //     {
-        //         // Render sub-object j
-        //     }
-
-        //     for (int j = 0; j < numCollision; j++)
-        //     {
-        //         // Test if sub-object j is visible repect to depth buffer.
-        //         // If it's not fully visible, note it as fully visible ?!
+                glEndQuery(GL_SAMPLES_PASSED);
                 
-        //     }
-        // }
+                int Passed = 0; // Number of pixels passed: if Passed > 0, render the objest
+                glGetQueryObjectiv(occlusionQuery, GL_QUERY_RESULT, &Passed);
+
+                // if(Passed > 0) -> 
+            }
+            glDepthMask(GL_TRUE);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            //glUseProgram(shader_program);
+            ModelShader.use();
+            glDepthFunc(GL_LEQUAL); // Passes if the incoming depth value is less than or equal to the stored depth value.
+            
+            for (int j = 0; j < numCollision; j++)
+            {
+                // Render sub-object j
+            }
+
+            for (int j = 0; j < numCollision; j++)
+            {
+                // Test if sub-object j is visible repect to depth buffer.
+                // If it's not fully visible, note it as fully visible ?!
+                
+            }
+        }
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
