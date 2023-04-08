@@ -5,10 +5,10 @@
 #include <glm/gtc/type_ptr.hpp> // same as above
 #include <iostream>
 #include <stdbool.h>
-// #include "main.hpp" // vector shader & fragment shader
 #include "shader.hpp"
 #include "camera.hpp"
 #include "model.hpp" 
+#include "box.hpp" 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -94,17 +94,21 @@ int main(void)
     glm::vec3 translation_C(-0.5f, -0.5f, -0.5f);
 
     /* load models */
+    vector<Model> models;
     glm::mat4 modelA = glm::translate(glm::mat4(1.0f), translation_A);
     modelA = glm::scale(modelA, glm::vec3(.2f, .2f, .2f));	// scale down the model in the scene           
     Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj", modelA); // load model and pass in the model matrix
+    models.push_back(toriModel);
 
     glm::mat4 modelB = glm::translate(glm::mat4(1.0f), translation_B);
     modelB = glm::scale(modelB, glm::vec3(.2f, .2f, .2f));    
     Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj", modelB);
+    models.push_back(cubeModel);
 
     glm::mat4 modelC = glm::translate(glm::mat4(1.0f), translation_C);
     modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
     Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
+    models.push_back(coneModel);
 
     /* Do the AABB here?
     Since the models are not moving, we can do AABB outside of the loop*/
@@ -113,19 +117,6 @@ int main(void)
     AABB(toriModel, coneModel); // 0
     AABB(cubeModel, coneModel); // 0
     cout << coneModel.MINs_t[0] << " " << coneModel.MAXs_t[0] << " "  << coneModel.MINs_t[1] << " " << coneModel.MAXs_t[1] << " " << coneModel.MINs_t[2] << " " << coneModel.MAXs_t[2] << endl;
-
-    /* Bounding box for occlusion query */
-    
-    // Mesh boundingBox(?, boxIndices, ?)
-
-    // GLuint queryObjects[3];
-    // GLuint pixelCount;
-    // glGenQueries(3, &queryObjects);
-    // for(int i = 0; i< 3; i++)
-    //     cout <<  "queryObjects "<< queryObjects[i] << endl;
-    GLuint occlusionQuery;
-    GLuint pixelCount;
-    glGenQueries(1, &occlusionQuery);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -152,61 +143,72 @@ int main(void)
         ModelShader.setMat4("view", view);
 
         /* Render the 1st loaded model */
-        ModelShader.setMat4("model", toriModel.model);
-        toriModel.Draw(ModelShader);
+        // ModelShader.setMat4("model", toriModel.model);
+        // toriModel.Draw(ModelShader);
 
         /* Render the 2nd loaded model */
-        ModelShader.setMat4("model", cubeModel.model);
-        cubeModel.Draw(ModelShader);
+        // ModelShader.setMat4("model", cubeModel.model);
+        // cubeModel.Draw(ModelShader);
 
         /* Render the 3rd loaded model */
-        ModelShader.setMat4("model", coneModel.model);
-        coneModel.Draw(ModelShader);
+        // ModelShader.setMat4("model", coneModel.model);
+        // coneModel.Draw(ModelShader);
         
-        for (int i = 0; i < 3 /* total number of objects */; i++)
+        for (long unsigned int i = 0; i < models.size() /*num of objects*/; i++)
         {
             /* goal: perform the depth test on all fragments and discard them accordingly, but not update the depth buffer */          
             glDepthMask(GL_FALSE);
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            // glUseProgram(query_shader_program);
             QueryShader.use();
             glDepthFunc(GL_GEQUAL); // Passes if the incoming depth value is greater than or equal to the stored depth value. 
 
-            /* Decompose object into sub-objects here? */
-
-            for (int j = 0; j < numCollision /*should be num of sub-objects*/; j++)
-            {
+            // boxes sizes (number of boxes) are all 64 = 4 ^ 3
+            for (long unsigned int j = 0; j < models[i].boxes.size() /*num of sub-objects*/; j++)
+            {   
                 /* Render sub-object j using occlusion query */
-                glBeginQuery(GL_SAMPLES_PASSED, occlusionQuery);
-                // !! render bounding box for sub-object j (use the min/max?)
-                glBindVertexArray(VAO_box);
-                glDrawElements(GL_TRIANGLES, 6*6, GL_UNSIGNED_INT, 0);
+                glBeginQuery(GL_SAMPLES_PASSED, models[i].boxes[j].query);
                 
+                // render bounding box for sub-object j
+                glBindVertexArray(models[i].boxes[j].VAO_box);
+                glDrawElements(GL_TRIANGLES, 6*6/*num of elements to be rendered*/, GL_UNSIGNED_INT, 0);
+                // glDrawElements(GL_TRIANGLES, 2*6, GL_UNSIGNED_INT, 0);
+
                 glEndQuery(GL_SAMPLES_PASSED);
                 
                 int Passed = 0; // Number of pixels passed: if Passed > 0, render the objest
-                glGetQueryObjectiv(occlusionQuery, GL_QUERY_RESULT, &Passed);
+                glGetQueryObjectiv(models[i].boxes[j].query, GL_QUERY_RESULT, &Passed);
 
+                // if(j == 60)
+                    // cout << "i: " << i << ", j: " << j << ", Passed: " << Passed << endl;
                 // if(Passed > 0) -> 
             }
             glDepthMask(GL_TRUE);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            //glUseProgram(shader_program);
             ModelShader.use();
             glDepthFunc(GL_LEQUAL); // Passes if the incoming depth value is less than or equal to the stored depth value.
             
-            for (int j = 0; j < numCollision; j++)
+            for (long unsigned int j = 0; j < models[i].boxes.size(); j++)
             {
                 // Render sub-object j
+                ModelShader.setMat4("model", toriModel.model);
+                toriModel.Draw(ModelShader);
+                ModelShader.setMat4("model", cubeModel.model);
+                cubeModel.Draw(ModelShader);
+                ModelShader.setMat4("model", coneModel.model);
+                coneModel.Draw(ModelShader);
             }
-
-            for (int j = 0; j < numCollision; j++)
+        }
+        
+        for (long unsigned int i = 0; i < models.size() /*num of objects*/; i++)
+        {
+            for (long unsigned int j = 0; j < models[i].boxes.size(); j++)
             {
                 // Test if sub-object j is visible repect to depth buffer.
                 // If it's not fully visible, note it as fully visible ?!
                 
             }
         }
+        
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

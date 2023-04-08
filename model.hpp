@@ -18,6 +18,7 @@
 #include <vector>
 #include "mesh.hpp"
 #include "shader.hpp"
+#include "box.hpp"
 
 using namespace std;
 
@@ -26,28 +27,16 @@ class Model
 {
     public:
         // model data
-        vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+        vector<Texture> textures_loaded; // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
         vector<Mesh> meshes;
         string directory;
         bool gammaCorrection;
 
         /* bounding box & AABB */
+        glm::mat4 model; // used to transform from Local to World space
         float minX, minY, minZ, maxX, maxY, maxZ;
         glm::vec4 MINs_t, MAXs_t;
-        glm::mat4 model;
-        int nb_cut = 2; // cut the model into 2^3 boxes
-        glm::vec3 boxSize; // size of box in World space, [0]: x; [1]: y; [2]: z
-
-        // int chunkrange = 4; = nb_cut
-        // int chunksize = 32; = boxSize
-
-        /* Bounding box for occlusion query */
-        /* Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures) */
-        vector<Vertex> boxVertices;
-        vector<unsigned int> boxIndices;
-        vector<Texture> boxTextures;
-        // GLfloat boundingBoxVertex[36];
-        // GLuint boundingBoxIndex[36];
+        vector<Box> boxes;
 
         Model(string path, glm::mat4 &Model)
         {
@@ -96,6 +85,9 @@ class Model
             vector<unsigned int> indices; // strores 3 indices of a face/triangle
             vector<Texture> textures;
             
+            glm::vec3 MINs, MAXs, test_MINs, test_MAXs;
+            glm::vec4 test_MINs_t, test_MAXs_t;
+
             /* walk through each of the mesh's vertices */ 
             for(unsigned int i = 0; i < mesh->mNumVertices; i++)
             {
@@ -107,9 +99,6 @@ class Model
                 vector.y = mesh->mVertices[i].y;
                 vector.z = mesh->mVertices[i].z;
                 vertex.Position = vector;
-
-                glm::vec3 MINs, MAXs, test_MINs, test_MAXs;
-                glm::vec4 test_MINs_t, test_MAXs_t;
 
                 /* Find the bounding box for AABB in world space (model* origin coordinate)*/
                 if(i == 0)
@@ -147,67 +136,6 @@ class Model
                     if(test_MAXs_t[2] > MAXs_t[2]) MAXs_t[2] = test_MAXs_t[2];
                 }
 
-                /* Calculate the x, y, z edge length of a bounding box */
-                boxSize.x = (MAXs_t[0] - MINs_t[0]) / nb_cut;
-                boxSize.y = (MAXs_t[1] - MINs_t[1]) / nb_cut;
-                boxSize.z = (MAXs_t[2] - MINs_t[2]) / nb_cut;
-
-                for(int i = -nb_cut; i < nb_cut; i++)
-                    for(int j = -nb_cut; j < nb_cut; j++)
-                        for(int k = -nb_cut; k < nb_cut; k++) {
-                            glm::vec3 offsetX = static_cast<float>(boxSize.x) * glm::vec3(i,j,k);
-                            glm::vec3 offsetY = static_cast<float>(boxSize.y) * glm::vec3(i,j,k);
-                            glm::vec3 offsetZ = static_cast<float>(boxSize.z) * glm::vec3(i,j,k);
-
-                            GLfloat boundingBoxVertex[] = { // 6 faces with 4 vertices
-                            // X                        Y                      Z
-                            // face 0 (rear)
-                                offsetX.x + boxSize.x, offsetY.y + boxSize.y, offsetZ.z + boxSize.z,
-                                offsetX.x            , offsetY.y + boxSize.y, offsetZ.z + boxSize.z,
-                                offsetX.x + boxSize.x, offsetY.y            , offsetZ.z + boxSize.z,
-                                offsetX.x            , offsetY.y            , offsetZ.z + boxSize.z,
-
-                            // face 1 (right)
-                                offsetX.x + boxSize.x, offsetY.y + boxSize.y, offsetZ.z + boxSize.z,
-                                offsetX.x + boxSize.x, offsetY.y            , offsetZ.z + boxSize.z,
-                                offsetX.x + boxSize.x, offsetY.y + boxSize.y, offsetZ.z            ,
-                                offsetX.x + boxSize.x, offsetY.y            , offsetZ.z            ,
-
-                            // face 2 (top)
-                                offsetX.x + boxSize.x, offsetY.y + boxSize.y, offsetZ.z + boxSize.z,
-                                offsetX.x + boxSize.x, offsetY.y + boxSize.y, offsetZ.z            ,
-                                offsetX.x            , offsetY.y + boxSize.y, offsetZ.z + boxSize.z,
-                                offsetX.x            , offsetY.y + boxSize.y, offsetZ.z            ,
-
-                            // face 3 (front)
-                                offsetX.x + boxSize.x, offsetY.y + boxSize.y, offsetZ.z            ,
-                                offsetX.x + boxSize.x, offsetY.y            , offsetZ.z            ,
-                                offsetX.x            , offsetY.y + boxSize.y, offsetZ.z            ,
-                                offsetX.x            , offsetY.y            , offsetZ.z            ,
-
-                            // face 4 (left)
-                                offsetX.x            , offsetY.y + boxSize.y, offsetZ.z + boxSize.z,
-                                offsetX.x            , offsetY.y + boxSize.y, offsetZ.z            ,
-                                offsetX.x            , offsetY.y            , offsetZ.z + boxSize.z,
-                                offsetX.x            , offsetY.y            , offsetZ.z            ,
-
-                            // face 5 (bottom)
-                                offsetX.x + boxSize.x, offsetY.y            , offsetZ.z + boxSize.z,
-                                offsetX.x            , offsetY.y            , offsetZ.z + boxSize.z,
-                                offsetX.x + boxSize.x, offsetY.y            , offsetZ.z            ,
-                                offsetX.x            , offsetY.y            , offsetZ.z            
-                            };
-
-                            GLuint boundingBoxIndex[] = {
-                                0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10,10, 9,11,
-                                12,13,14,14,13,15,16,17,18,18,17,19,20,21,22,22,21,23,
-                            };
-
-                            for(unsigned int l = 0; l < sizeof(boundingBoxIndex); l++)
-                                boxIndices.push_back(boundingBoxIndex[l]);
-
-                            Mesh(boundingBoxVertex[36], boxIndices);
-                        }
                 /* normals */ 
                 if (mesh->HasNormals())
                 {
@@ -245,6 +173,11 @@ class Model
 
                 vertices.push_back(vertex);
             }
+            
+            Box boundingBox(MINs_t, MAXs_t);
+            boxes = boundingBox.createBoxes();
+
+            // cout << "x: " << boxes.boxSize.x << "y: " boxes.boxSize.y << "z: " << boxes.boxSize.z << endl;
 
             cout << "# faces: " << mesh->mNumFaces << endl; // tori: 1152; cube: 12
             cout << "---------------" << endl;
