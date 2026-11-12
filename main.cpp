@@ -84,8 +84,8 @@ int main(void)
     glEnable(GL_DEPTH_TEST);
 
     /* build and compile shaders */
-    Shader ModelShader("/root/OpenGL/Projects/modelVertexShader.vs", "/root/OpenGL/Projects/modelFragmentShader.fs");  
-    Shader QueryShader("/root/OpenGL/Projects/queryVertexShader.vs", "/root/OpenGL/Projects/queryFragmentShader.fs");
+    Shader ModelShader("modelVertexShader.vs", "modelFragmentShader.fs");  
+    Shader QueryShader("queryVertexShader.vs", "queryFragmentShader.fs");
 
     /* Set locations for models */
     glm::vec3 translation_A(0.5f, 0.5f, 0.5f);
@@ -96,17 +96,17 @@ int main(void)
     vector<Model> models;
     glm::mat4 modelA = glm::translate(glm::mat4(1.0f), translation_A);
     modelA = glm::scale(modelA, glm::vec3(.2f, .2f, .2f));	// scale down the model in the scene           
-    Model toriModel("/root/OpenGL/Projects/Objects/doughnut.obj", modelA); // load model and pass in the model matrix
+    Model toriModel("Objects/doughnut.obj", modelA); // load model and pass in the model matrix
     models.push_back(toriModel);
 
     glm::mat4 modelB = glm::translate(glm::mat4(1.0f), translation_B);
     modelB = glm::scale(modelB, glm::vec3(.2f, .2f, .2f));    
-    Model cubeModel("/root/OpenGL/Projects/Objects/pinkCube.obj", modelB);
+    Model cubeModel("Objects/pinkCube.obj", modelB);
     models.push_back(cubeModel);
 
     glm::mat4 modelC = glm::translate(glm::mat4(1.0f), translation_C);
     modelC= glm::scale(modelC, glm::vec3(.2f, .2f, .2f)); 
-    Model coneModel("/root/OpenGL/Projects/Objects/cone.obj", modelC);
+    Model coneModel("Objects/cone.obj", modelC);
     models.push_back(coneModel);
 
     /* Do the AABB here?
