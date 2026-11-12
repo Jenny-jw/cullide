@@ -1,4 +1,4 @@
-#include "../glad/gl.h"
+#include "glad/gl.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> // in Joey's source code but not sure if it's needed
@@ -8,7 +8,6 @@
 #include "shader.hpp"
 #include "camera.hpp"
 #include "model.hpp" 
-#include "box.hpp" 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
